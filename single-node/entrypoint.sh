@@ -21,18 +21,23 @@ function finalize_deploy()
 
 trap finalize_deploy EXIT
 
+if [ $JUPYTER == "no" ]
+then
+	CLIENT_SERVICE=${DEPLOY:-'terminal'}
+else
+	CLIENT_SERVICE=${DEPLOY:-'jupyter'}
+fi
 
-CLIENT_SERVICE=${DEPLOY:-'jupyter'}
 if [ $CLIENT_SERVICE == "terminal" ]
 then
 	OPH_COMPONENT_MEM_LIMIT="$((${MEMORY:-2048}/2))"
 	[ -z "$DEBUG" ] && DEBUG="" || DEBUG="-d"
 elif [ $CLIENT_SERVICE == "terminal_only" ]
 then
-	SERVER_IP=${IP:-'172.17.0.3'}
-	SERVER_PORT=${PORT:-'11732'}
-	OPH_USER=${USER:-'oph-test'}
-	OPH_PWD=${PASS:-'abcd'}
+	SERVER_IP=${OPH_SERVER_HOST:-'172.17.0.3'}
+	SERVER_PORT=${OPH_SERVER_PORT:-'11732'}
+	OPH_USER=${OPH_USER:-'oph-test'}
+	OPH_PWD=${OPH_PASSWD:-'abcd'}
 	exit
 elif [ $CLIENT_SERVICE == "jupyter" ]
 then

@@ -336,11 +336,11 @@ USER root
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/oph-server/etc/script/oph_submit.sh
 COPY entrypoint.sh /
 
-ENV DEPLOY=jupyter
-
 EXPOSE 11732
 EXPOSE 8888
 EXPOSE 65000
+
+ENV JUPYTER=$jupyter
 
 LABEL SLURM=$slurm JUPYTER=$jupyter OFFLINE_OPHIDIA_RPMS=$offline_ophidia THREAD_SAFE=$thread_safe
 
