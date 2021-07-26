@@ -21,27 +21,24 @@ function finalize_deploy()
 
 trap finalize_deploy EXIT
 
-CLIENT_SERVICE=${1:-'terminal'}
+
+CLIENT_SERVICE=${DEPLOY:-'jupyter'}
 if [ $CLIENT_SERVICE == "terminal" ]
 then
-	OPTIONAL_MEMORY_LIMIT=${2:-2048}
-	OPH_COMPONENT_MEM_LIMIT="$(($OPTIONAL_MEMORY_LIMIT/2))"
-	OPTIONAL_DEBUG_MODE=$3
-	[ -z "$3" ] && DEBUG="" || DEBUG="-d"
+	OPH_COMPONENT_MEM_LIMIT="$((${MEMORY:-2048}/2))"
+	[ -z "$DEBUG" ] && DEBUG="" || DEBUG="-d"
 elif [ $CLIENT_SERVICE == "terminal_only" ]
 then
-	SERVER_IP=${2:-'172.17.0.3'}
-	SERVER_PORT=${3:-'11732'}
-	OPH_USER=${4:-'oph-test'}
-	OPH_PWD=${5:-'abcd'}
+	SERVER_IP=${IP:-'172.17.0.3'}
+	SERVER_PORT=${PORT:-'11732'}
+	OPH_USER=${USER:-'oph-test'}
+	OPH_PWD=${PASS:-'abcd'}
 	exit
 elif [ $CLIENT_SERVICE == "jupyter" ]
 then
-	JUPYTER_PORT=${2:-8888}
-	OPTIONAL_MEMORY_LIMIT=${3:-2048}
-	OPH_COMPONENT_MEM_LIMIT="$(($OPTIONAL_MEMORY_LIMIT/2))"
-	OPTIONAL_DEBUG_MODE=$4
-	[ -z "$4" ] && DEBUG="" || DEBUG="-d"
+	JUPYTER_PORT=${UI_PORT:=8888}
+	OPH_COMPONENT_MEM_LIMIT="$((${MEMORY:-2048}/2))"
+	[ -z "$DEBUG" ] && DEBUG="" || DEBUG="-d"
 fi
 
 [ -d '/var/run/slurm' ] && SLURM_BUILD=true || SLURM_BUILD=false
