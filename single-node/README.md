@@ -30,7 +30,8 @@ docker tag -t ophidia:squashed ophidia:latest
 Visit https://pypi.org/project/docker-squash/ to read the full documentation.
 
 ## Container run instruction:
-To start the container run the following command:
+
+To start the container the following command can be used:
 
 ```docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH ophidia:latest```
 
@@ -44,37 +45,25 @@ The container can also be named by adding ```--name ophidia``` option to the com
 
 ### Run notes:
 
-Different execution scenarios are supported by specifying an additional argument at the end of the previous command.
+Different execution scenarios are supported by specifying the ```DEPLOY``` environment variable.
 
-#### Full software stack
+#### Full Ophidia software stack with Jupyter Notebook
 
-The ```terminal``` argument (default) can be used to deploy the entire Ophidia Framework and give access to a ready-to-use Ophidia Terminal. 
-Additional arguments can be specified for this case:
-- RAM limit (in MB). Default maximum memory allocation is 2GB. For example if you want to use maximum 4GB of RAM, run: 
+The ```DEPLOY=jupyter``` option (default) can be used to start the entire Ophidia Framework, a pre-configured Jupyter Notebook and the Python environment accessible from the host.  
+Additional environment variables can be specified for this case:
+- ```UI_PORT```: the Jupyter port. Default value is 8888. A different port, like 8889 can be specified as in the example: 
 
-  ```docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH ophidia:latest terminal 4096```
+  ```docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH -e UI_PORT=8889 ophidia:latest```
 
-- A flag to enable the debug mode (not active by default). For example: 
+- ```MEMORY```: the RAM limit (in MB) used by Ophidia. Default maximum memory allocation is 2GB. For example if you want to use maximum 4GB of RAM, run: 
 
-  ```docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH ophidia:latest terminal 2048 1```
+  ```docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH -e MEMORY=4096 ophidia:latest```
 
-#### Full software stack with Jupyter Notebook
+- ```DEBUG```: a flag to enable the debug mode (not active by default). For example:
 
-The ```jupyter``` argument can be used to deploy the entire Ophidia Framework and a pre-configured Jupyter Notebook and Python environment accessible from the host.  
-Additional arguments can also be specified for this case:
-- Jupyter port. Default port is 8888. A different port, like 8889 can be specified as in the example: 
+  ```docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH -e DEBUG=1 ophidia:latest```
 
-  ```docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH ophidia:latest jupyter 8889```
-
-- RAM limit (in MB). Same as for the previous case. For example: 
-
-  ```docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH ophidia:latest jupyter 8888 4096```
-
-- Debug mode. Same as for the previous case. For example:  
-  
-  ```docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH ophidia:latest jupyter 8888 2048 1```
-
-The Jupyter Notebook server can be accessed from the browser and the URL will be "http://CONTAINER_IP:JUPYTER_PORT" (for example: http://172.17.0.3:8888/). To access the Jupyter Notebook server type "ophidia" as password. The URL will be shown in the output of the running container. 
+The Jupyter Notebook server can be accessed from the browser and the URL will be "http\://CONTAINER_IP:JUPYTER_PORT" (for example: ```http://172.17.0.2:8888/```). The URL will also be shown in the output of the running container. To login to the Jupyter Notebook server type "ophidia" as password.  
 
 The container's IP Address can also be found by running for example: 
 
@@ -82,17 +71,29 @@ The container's IP Address can also be found by running for example:
 
 The Jupyter Notebook working dir is "/home/ophidia". It is hence recommended to mount notebooks and files from the host under this folder to access them from the UI. For example: 
 
-```docker run --rm -it -v HOST_FILES_PATH:/home/ophidia/files ophidia:latest jupyter```
+```docker run --rm -it -v HOST_FILES_PATH:/home/ophidia/CONTAINER_PATH ophidia:latest jupyter```
+
+#### Full Ophidia software stack only
+
+The ```DEPLOY=terminal``` option can be used to start the entire Ophidia Framework and give access to a ready-to-use Ophidia Terminal. 
+Additional arguments can be specified also for this case:
+
+- ```MEMORY```: the RAM limit (in MB) used by Ophidia.
+- ```DEBUG```: a flag to enable the debug mode.
+
+For example:
+
+```docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH -e DEPLOY=terminal -e MEMORY=4096 -e DEBUG=1 ophidia:latest```
 
 #### Ophidia Terminal only
 
-The ```terminal_only``` argument can be used to run only the Ophidia Terminal to be used with an existing Ophidia deployment.
+The ```DEPLOY=terminal_only``` option can be used to run only the Ophidia Terminal to be used with an existing Ophidia deployment.
 Additional arguments can also be specified for this case:
-- Ophidia Server IP Address (default: 172.17.0.3).
-- Ophidia Server port (default: 11732).
-- Ophidia user (default: oph-test).
-- Ophidia password (default: abcd).
+- ```IP```: Ophidia Server IP Address (default: 172.17.0.2).
+- ```PORT```: Ophidia Server port (default: 11732).
+- ```USER```: Ophidia user (default: oph-test).
+- ```PASS```: Ophidia password (default: abcd).
 
 For example: 
 
-```docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH ophidia:latest terminal_only 172.17.0.3 11732 oph-test abcd```
+```docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH -e DEPLOY=terminal_only -e IP='172.17.0.3' -e PORT='11732' -e USER='oph-test' -e PASS='abcd' ophidia:latest```
