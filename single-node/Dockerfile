@@ -330,6 +330,8 @@ RUN if [ "$jupyter" = "yes" ] ; then \
 	printf "{\n  \"NotebookApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_notebook_config.json && \
 	chmod 600 /usr/local/ophidia/.jupyter/jupyter_notebook_config.json && \
 	sed -i "s/ioserver='mysql_table'/ioserver='ophidiaio_memory'/g" /usr/local/ophidia/.local/lib/python3.6/site-packages/PyOphidia/cube.py && \
+	sed -i "s/ioserver=\"mysql_table\"/ioserver=\"ophidiaio_memory\"/g" /usr/local/ophidia/.local/lib/python3.6/site-packages/PyOphidia/cube.py && \
+	sed -i "s/mysql_table|//g" /usr/local/ophidia/.local/lib/python3.6/site-packages/PyOphidia/cube.py && \
 	printf "\nYour jupyter password is:\t\'ophidia\'\n"; fi
 USER root
 
