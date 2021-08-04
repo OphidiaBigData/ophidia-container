@@ -169,7 +169,7 @@ USER root
 
 RUN if [ "$thread_safe" != "yes" ] ; then \
 	if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q https://download.ophidia.cmcc.it/rpm/1.6/ophidia-analytics-framework-1.6.0-0.el7.centos.x86_64.rpm ; fi && \
+	else cd /repo && wget -q https://download.ophidia.cmcc.it/rpm/1.6/ophidia-analytics-framework-1.6.1-0.el7.centos.x86_64.rpm ; fi && \
 	yum -y install ophidia-analytics-framework-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
@@ -188,7 +188,7 @@ RUN if [ "$thread_safe" != "yes" ] ; then yum -y install openssl-devel jansson-d
 
 #OPHIDIA SERVER
 RUN if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q https://download.ophidia.cmcc.it/rpm/1.6/ophidia-server-1.6.1-0.el7.centos.x86_64.rpm ; fi && \
+	else cd /repo && wget -q https://download.ophidia.cmcc.it/rpm/1.6/ophidia-server-1.6.2-0.el7.centos.x86_64.rpm ; fi && \
 	yum -y install ophidia-server-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
