@@ -26,7 +26,7 @@ http://www.gnu.org/copyleft/gpl.html
 zlib License</br>
 http://www.zlib.net/zlib_license.html
 
-- Base64 encoding & decoding code (https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64)
+- Base64 encoding & decoding code (https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64)</br>
 Creative Commons CC BY-SA 3.0</br>
 https://creativecommons.org/licenses/by-sa/3.0/#
 
