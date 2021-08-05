@@ -1,7 +1,7 @@
 Licensing information
 ---------------------
 
-The Ophidia Framework components (ophidia-server, ophidia-analytics-framewor, ophdia-primitives, ophidia-io-server, ophidia-terminal) are released under the GPLv3 license:</br>
+The Ophidia Framework components (ophidia-server, ophidia-analytics-framework, ophdia-primitives, ophidia-io-server, ophidia-terminal) are released under the GPLv3 license:</br>
 https://www.gnu.org/licenses/gpl-3.0.html
 
 The following dependencies and software components used with Ophidia are included in the image:
@@ -141,7 +141,7 @@ BSD License</br>
 https://github.com/Toblerity/Shapely/blob/master/LICENSE.txt
 
 - SciTools Cartopy</br>
-LGPLv3+</br></br>
+LGPLv3+</br>
 https://scitools.org.uk/cartopy/docs/latest/copyright.html
 
 - SciPy</br>
@@ -155,10 +155,9 @@ https://numpy.org/doc/stable/license.html
 <b>Note</b>:</br>
 This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit.
 
-Source code generated with GNU Bison (https://www.gnu.org/software/bison/) and flex (http://flex.sourceforge.net) is included.</br>
+Source code generated with GNU Bison (https://www.gnu.org/software/bison/) and flex (http://flex.sourceforge.net) is included in Ophidia.</br>
 
-Additionally some source code (in src/oph_network.c) and configuration lines (in configure.ac) have been adapted from the example source code available from Unix Network Programming, Volume 1, 3rd ed., by W. R. Stevens, B. Fenner, A. M. Rudoff. </br>
-http://www.unpbook.com/src.html
+Additionally some source code in Ophidia IO Server (oph_network.c) and configuration lines (in configure.ac) have been adapted from the example source code available from Unix Network Programming, Volume 1, 3rd ed., by W. R. Stevens, B. Fenner, A. M. Rudoff. http://www.unpbook.com/src.html
 
 <b>Final note</b>:</br>
 As with all Docker images, these likely also contain other software which may be under other licenses (such as Bash, etc from the base distribution, along with any direct or indirect dependencies of the primary software being contained).
