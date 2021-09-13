@@ -325,6 +325,10 @@ RUN if [ "$jupyter" = "yes" ] ; then \
 	export CFLAGS="-I/usr/local/ophidia/proj/include" && \
 	export LDFLAGS="-L/usr/local/ophidia/proj/lib" && \
 	pip3 install -q --user cartopy && \
+	cd /repo/ && \
+	wget -q https://raw.githubusercontent.com/SciTools/cartopy/master/tools/cartopy_feature_download.py && \
+	python3 cartopy_feature_download.py physical && \
+	rm -rf /repo/* && \
 	mkdir -p /usr/local/ophidia/.jupyter/ && \
 	touch /usr/local/ophidia/.jupyter/jupyter_notebook_config.json && \
 	printf "{\n  \"NotebookApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_notebook_config.json && \
