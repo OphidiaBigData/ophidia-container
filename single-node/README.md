@@ -1,9 +1,9 @@
 # Ready-to-use ***Ophidia HPDA Framework*** in a single Docker container
 
 ## Requirements:
-- Linux OS (tested on CentOS 7)
-- Docker (tested with >=v17)
-- At least 4-5GB of free disk space (according to the various option is activated). 
+- Linux Kernel (tested on CentOS 7 OS and Windows Subsystem for Linux 2 Kernel)
+- Docker for Linux (tested with >=v17) or Docker Desktop for Windows (tested with >=v4.0.1 on engine >=20.10.8)
+- At least 2.7GB of free disk space (according to which option is activated). 
 
 ## Image build instruction:
 To build the image run:
@@ -53,7 +53,9 @@ $ docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH --name ophidia op
 
 ### Run notes:
 
-Different execution scenarios are supported by specifying the ```DEPLOY``` environment variable.
+- Different execution scenarios are supported by specifying the ```DEPLOY``` environment variable.
+- Docker Desktop for Windows (with WSL2 Kernel) specific: on PowerShell add "-p 8888:8888" to the "docker run" command before the image name if you are in Jupyter mode (the default one) with the default port. Note that the "NETCDF\_FILES\_HOST\_PATH" binding string must be in Windows' directory path specification convention (so, use backslashes instead of forward slashes that are used for "CONTAINER\_PATH").
+Open a browser installed on Windows and visit "localhost:8888" to use the Jupyter-based deploy (in case of problems: open PowerShell, type "hostname" and use the resulting output as the first part - before the colon - of the URL to visit).
 
 #### Full Ophidia software stack with Jupyter Notebook
 
