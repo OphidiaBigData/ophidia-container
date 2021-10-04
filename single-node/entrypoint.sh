@@ -2,6 +2,7 @@
 
 function finalize_deploy()
 {
+	cd /home/ophidia/
 	if [[ $CLIENT_SERVICE == "terminal" ]]
 	then
 		su -c "/usr/local/ophidia/oph-terminal/bin/oph_term -H 127.0.0.1 -u oph-test -p abcd -P 11732" ophidia
