@@ -51,11 +51,7 @@ The container can also be named by adding ```--name ophidia``` option to the com
 $ docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH --name ophidia ophidia:latest
 ```
 
-### Run notes:
-
-- Different execution scenarios are supported by specifying the ```DEPLOY``` environment variable.
-- Docker Desktop for Windows (with WSL2 Kernel) specific: on PowerShell add "-p 8888:8888" to the "docker run" command before the image name if you are in Jupyter mode (the default one) with the default port. Note that the "NETCDF\_FILES\_HOST\_PATH" binding string must be in Windows' directory path specification convention (so, use backslashes instead of forward slashes that are used for "CONTAINER\_PATH").
-Open a browser installed on Windows and visit "localhost:8888" to use the Jupyter-based deploy (in case of problems: open PowerShell, type "hostname" and use the resulting output as the first part - before the colon - of the URL to visit).
+The following subsections will provide additional details about the possible options available.
 
 #### Full Ophidia software stack with Jupyter Notebook
 
@@ -92,6 +88,11 @@ The Jupyter Notebook working dir is "/home/ophidia". It is hence recommended to 
 ```
 $ docker run --rm -it -v HOST_FILES_PATH:/home/ophidia/CONTAINER_PATH ophidia:latest jupyter
 ```
+
+##### Run notes:
+
+- If running with Docker Desktop for Windows (with WSL2 Kernel), on PowerShell add ```-p 8888:8888``` to the *docker run* command before the image name in the  Jupyter deploy mode. Note that the *"NETCDF\_FILES\_HOST\_PATH"* binding string must be in Windows' directory path specification convention (i.e. use backslashes instead of forward slashes). Open a browser and visit "http\://localhost:8888" or, in case of issues, open PowerShell, type "hostname" and use the resulting output as the first part of the URL to visit (i.e. "http\://HOSTNAME:8888").
+- If running with Docker Desktop for Mac on Apple silicon add ```--platform linux/amd64``` to the *docker run* command before the image name to run the image under emulation.
 
 #### Full Ophidia software stack only
 
