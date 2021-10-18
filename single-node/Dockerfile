@@ -56,7 +56,7 @@ RUN yum -y install compat-guile18 compat-guile18-devel flex flex-devel guile-dev
 	make install -s > /dev/null 2>&1 && \
 	#OPHIDIA PRIMITIVES
 	if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia && rm oph_submit.sh ; \
-	else cd /repo && wget -q https://download.ophidia.cmcc.it/rpm/1.6/ophidia-primitives-1.6.0-0.el7.centos.x86_64.rpm ; fi && \
+	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-primitives-1.6.0-0.el7.centos.x86_64.rpm ; fi && \
 	yum -y install ophidia-primitives-*.rpm && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	rm -rf /repo/* && \
@@ -128,7 +128,7 @@ USER root
 
 RUN if [ "$thread_safe" != "yes" ] ; then \
 	if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q https://download.ophidia.cmcc.it/rpm/1.6/ophidia-io-server-1.6.0-0.el7.centos.x86_64.rpm ; fi && \
+	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-io-server-1.6.0-0.el7.centos.x86_64.rpm ; fi && \
 	yum -y install ophidia-io-server-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	sed -i "s/127.0.0.1/0.0.0.0/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf && \
@@ -169,7 +169,7 @@ USER root
 
 RUN if [ "$thread_safe" != "yes" ] ; then \
 	if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q https://download.ophidia.cmcc.it/rpm/1.6/ophidia-analytics-framework-1.6.1-0.el7.centos.x86_64.rpm ; fi && \
+	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-analytics-framework-1.6.1-0.el7.centos.x86_64.rpm ; fi && \
 	yum -y install ophidia-analytics-framework-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
@@ -188,7 +188,7 @@ RUN if [ "$thread_safe" != "yes" ] ; then yum -y install openssl-devel jansson-d
 
 #OPHIDIA SERVER
 RUN if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q https://download.ophidia.cmcc.it/rpm/1.6/ophidia-server-1.6.2-0.el7.centos.x86_64.rpm ; fi && \
+	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-server-1.6.2-0.el7.centos.x86_64.rpm ; fi && \
 	yum -y install ophidia-server-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
@@ -236,7 +236,7 @@ RUN yum -y install mod_ssl php-mysql php-devel php-gd php-pecl-memcache php-pspe
 
 #OPHIDIA TERMINAL
 RUN if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q https://download.ophidia.cmcc.it/rpm/1.6/ophidia-terminal-1.6.0-0.el7.centos.x86_64.rpm ; fi && \
+	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-terminal-1.6.0-0.el7.centos.x86_64.rpm ; fi && \
 	yum -y install ophidia-terminal-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	rm -rf /repo/*
