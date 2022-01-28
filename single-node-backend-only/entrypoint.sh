@@ -22,6 +22,8 @@ export OPH_SERVER_PORT="11732"
 export OPH_SERVER_HOST="127.0.0.1"
 export OPH_PASSWD="abcd"
 
+export HDF5_USE_FILE_LOCKING=FALSE
+
 /usr/local/ophidia/oph-cluster/oph-io-server/bin/oph_io_server -d -i 1 > /dev/null 2>&1 &
 /usr/local/ophidia/oph-server/bin/oph_server $DEBUG &>/dev/null &
 wait
