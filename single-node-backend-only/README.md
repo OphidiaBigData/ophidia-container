@@ -2,7 +2,7 @@
 
 ## Requirements:
 - Linux Kernel (tested on CentOS 7 OS and Windows Subsystem for Linux 2 Kernel)
-- Docker for Linux (tested with >=v17) or Docker Desktop for Windows (tested with >=v4.0.1 on engine >=20.10.8)
+- Docker for Linux (tested with >=v17) or Docker Desktop for Windows (tested with >=v4.0.1 on engine >=20.10.8) or Udocker (tested with v1.3.1 along with v1.2.8 Udocker Lib Tools)
 - At least 1.8GB of free disk space (according to which option is activated). 
 
 ## Image build instruction:
@@ -55,4 +55,6 @@ Additional environment variables can be specified for this case:
 
 - If running with Docker Desktop for Windows (with WSL2 Kernel), note that the *"NETCDF\_FILES\_HOST\_PATH"* binding string must be in Windows' directory path specification convention (i.e. use backslashes instead of forward slashes).
 - If running with Docker Desktop for Mac on Apple silicon add ```--platform linux/amd64``` to the *docker run* command before the image name to run the image under emulation.
+- If running with Udocker add ```--env=TECH=udocker --publish=11732:11732 --ANY_EMPTY_HOST_DIR:/var/run/mysqld/``` too, network port 3309 should be free and you will not have operators' autocompletion.
+
 
