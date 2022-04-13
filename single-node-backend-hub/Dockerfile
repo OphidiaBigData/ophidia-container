@@ -7,3 +7,5 @@ RUN usermod -u 1001 ophidia && \
 
 RUN useradd -u 1000 -g users -m jovyan
 
+COPY entrypoint.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
