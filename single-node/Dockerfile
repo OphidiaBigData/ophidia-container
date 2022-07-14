@@ -3,7 +3,6 @@ FROM centos:7
 LABEL author="CMCC Foundation" description="Ophidia HPDA Framework"
 
 ARG slurm=no
-ARG offline_ophidia=no
 ARG thread_safe=yes
 ARG jupyter=no
 
@@ -28,7 +27,7 @@ RUN chmod -R 777 /var/lib/mysql && \
 	groupmod -g 1000 ophidia && \
 	chown -R ophidia:ophidia /usr/local/ophidia
 
-ADD server_scripts/oph_submit.sh offline_ophidia_*.tar.gz /offline_ophidia/
+ADD server_scripts/oph_submit.sh
 
 USER mysql
 RUN mysqld --initialize-insecure && \
@@ -55,8 +54,7 @@ RUN yum -y install compat-guile18 compat-guile18-devel flex flex-devel guile-dev
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	#OPHIDIA PRIMITIVES
-	if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia && rm oph_submit.sh ; \
-	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-primitives-1.6.0-0.el7.centos.x86_64.rpm ; fi && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v1.7.0/ophidia-primitives-1.7.0-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-primitives-*.rpm && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	rm -rf /repo/* && \
@@ -127,8 +125,7 @@ RUN if [ "$thread_safe" = "yes" ] ; then \
 USER root
 
 RUN if [ "$thread_safe" != "yes" ] ; then \
-	if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-io-server-1.6.0-0.el7.centos.x86_64.rpm ; fi && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-io-server/releases/download/v1.7.0/ophidia-io-server-1.7.0-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-io-server-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	sed -i "s/127.0.0.1/0.0.0.0/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf && \
@@ -168,8 +165,7 @@ RUN if [ "$thread_safe" = "yes" ] ; then \
 USER root
 
 RUN if [ "$thread_safe" != "yes" ] ; then \
-	if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-analytics-framework-1.6.1-0.el7.centos.x86_64.rpm ; fi && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-analytics-framework/releases/download/v1.7.0/ophidia-analytics-framework-1.7.0-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-analytics-framework-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
@@ -187,8 +183,7 @@ RUN if [ "$thread_safe" != "yes" ] ; then yum -y install openssl-devel jansson-d
 	rm -rf /repo/*
 
 #OPHIDIA SERVER
-RUN if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-server-1.6.2-0.el7.centos.x86_64.rpm ; fi && \
+RUN cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-server/releases/download/v1.7.0/ophidia-server-1.7.0-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-server-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
@@ -235,8 +230,7 @@ RUN yum -y install mod_ssl php-mysql php-devel php-gd php-pecl-memcache php-pspe
 	openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -out server.crt -keyout server.key -subj "/"
 
 #OPHIDIA TERMINAL
-RUN if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-terminal-1.6.0-0.el7.centos.x86_64.rpm ; fi && \
+RUN cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-terminal/releases/download/v1.7.0/ophidia-terminal-1.7.0-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-terminal-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	rm -rf /repo/*
@@ -348,6 +342,6 @@ EXPOSE 65000
 
 ENV JUPYTER=$jupyter
 
-LABEL SLURM=$slurm JUPYTER=$jupyter OFFLINE_OPHIDIA_RPMS=$offline_ophidia THREAD_SAFE=$thread_safe
+LABEL SLURM=$slurm JUPYTER=$jupyter THREAD_SAFE=$thread_safe
 
 ENTRYPOINT ["/entrypoint.sh"]
