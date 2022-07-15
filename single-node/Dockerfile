@@ -8,6 +8,8 @@ ARG jupyter=no
 
 USER root
 
+RUN rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
+
 RUN cd / && \
 	yum -y update yum && \
 	yum -y update && \
@@ -27,7 +29,7 @@ RUN chmod -R 777 /var/lib/mysql && \
 	groupmod -g 1000 ophidia && \
 	chown -R ophidia:ophidia /usr/local/ophidia
 
-ADD server_scripts/oph_submit.sh
+ADD server_scripts/oph_submit.sh /offline_ophidia/
 
 USER mysql
 RUN mysqld --initialize-insecure && \
@@ -295,41 +297,34 @@ RUN if [ "$slurm" = "yes" ] ; then \
 COPY server_scripts/oph_submit.sh slurm*.conf /usr/local/ophidia/extra/etc/
 RUN if [ "$slurm" = "yes" ] ; then rm /usr/local/ophidia/extra/etc/oph_submit.sh && chown -R ophidia:ophidia /usr/local/ophidia/extra/etc/ ; fi
 
-RUN if [ "$jupyter" = "yes" ] ; then yum -y install python36 python36-pip python36-devel geos geos-devel nodejs libtiff-devel libsqlite3x libsqlite3x-devel && yum -y clean all ; fi
+ENV CONDA_DIR=/opt/conda
+RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh && \
+    bash Miniconda3-py38_4.12.0-Linux-x86_64.sh -b -p /opt/conda && \
+    rm -r Miniconda3-py38_4.12.0-Linux-x86_64.sh         
+ENV PATH=$CONDA_DIR/bin:$PATH
+
 USER ophidia
-RUN if [ "$jupyter" = "yes" ] ; then pip3 install -q --user jupyter notebook numpy matplotlib pyophidia scipy ; fi
-ENV PYTHONPATH=$PYTHONPATH:/usr/local/ophidia/.local/lib/python3.6/site-packages/
+ENV PATH=$CONDA_DIR/bin:$PATH
+ADD environment.yml /tmp/environment.yml
+RUN conda env create -f /tmp/environment.yml -p /usr/local/ophidia/env 
 USER root
-RUN if [ "$jupyter" = "yes" ] ; then \
-	npm install --silent -g configurable-http-proxy && \
-	mkdir -p /home/ophidia && chown ophidia:ophidia /home/ophidia ; fi
+RUN rm -r /tmp/environment.yml
 USER ophidia
-RUN if [ "$jupyter" = "yes" ] ; then \
-	cd /repo && \
-	wget -q https://download.osgeo.org/proj/proj-6.0.0.tar.gz && \
-	tar -xzf proj-6.0.0.tar.gz && \
-	cd proj-6.0.0 && \
-	mkdir -p $HOME/proj && \
-	./configure --prefix=$HOME/proj > /dev/null 2>&1 && make -s > /dev/null 2>&1 && make install -s > /dev/null 2>&1 && \
-	rm -rf /repo/* ; fi
+
+RUN echo "source activate /usr/local/ophidia/env" > ~/.bashrc
+ENV PATH=/usr/local/ophidia/env/bin:$PATH
+
 ENV PATH=$PATH:/usr/local/ophidia/proj/bin:/usr/local/ophidia/.local/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ophidia/proj/lib:/usr/local/ophidia/.local/lib
+
 RUN if [ "$jupyter" = "yes" ] ; then \
-	pip3 install -q --user --no-binary shapely shapely && \
-	export CFLAGS="-I/usr/local/ophidia/proj/include" && \
-	export LDFLAGS="-L/usr/local/ophidia/proj/lib" && \
-	pip3 install -q --user cartopy && \
-	cd /repo/ && \
-	wget -q https://raw.githubusercontent.com/SciTools/cartopy/master/tools/cartopy_feature_download.py && \
-	python3 cartopy_feature_download.py physical && \
-	rm -rf /repo/* && \
 	mkdir -p /usr/local/ophidia/.jupyter/ && \
 	touch /usr/local/ophidia/.jupyter/jupyter_notebook_config.json && \
 	printf "{\n  \"NotebookApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_notebook_config.json && \
 	chmod 600 /usr/local/ophidia/.jupyter/jupyter_notebook_config.json && \
-	sed -i "s/ioserver='mysql_table'/ioserver='ophidiaio_memory'/g" /usr/local/ophidia/.local/lib/python3.6/site-packages/PyOphidia/cube.py && \
-	sed -i "s/ioserver=\"mysql_table\"/ioserver=\"ophidiaio_memory\"/g" /usr/local/ophidia/.local/lib/python3.6/site-packages/PyOphidia/cube.py && \
-	sed -i "s/mysql_table|//g" /usr/local/ophidia/.local/lib/python3.6/site-packages/PyOphidia/cube.py && \
+	sed -i "s/ioserver='mysql_table'/ioserver='ophidiaio_memory'/g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
+	sed -i "s/ioserver=\"mysql_table\"/ioserver=\"ophidiaio_memory\"/g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
+	sed -i "s/mysql_table|//g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
 	printf "\nYour jupyter password is:\t\'ophidia\'\n"; fi
 USER root
 
