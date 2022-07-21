@@ -6,6 +6,7 @@ dependencies:
   - bokeh
   - cartopy
   - jupyter
+  - jupyterlab
   - matplotlib
   - notebook
   - numpy
