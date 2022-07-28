@@ -56,7 +56,7 @@ RUN yum -y install compat-guile18 compat-guile18-devel flex flex-devel guile-dev
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	#OPHIDIA PRIMITIVES
-	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v1.7.0/ophidia-primitives-1.7.0-0.el7.centos.x86_64.rpm && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v1.7.1/ophidia-primitives-1.7.1-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-primitives-*.rpm && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	rm -rf /repo/* && \
@@ -116,7 +116,7 @@ RUN if [ "$thread_safe" = "yes" ] ; then \
 	cd /usr/local/ophidia/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-io-server && \
 	cd ophidia-io-server && \
-	#git checkout master && \
+	git checkout master && \
 	./bootstrap > /dev/null 2>&1 && \
 	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-io-server --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
@@ -127,7 +127,7 @@ RUN if [ "$thread_safe" = "yes" ] ; then \
 USER root
 
 RUN if [ "$thread_safe" != "yes" ] ; then \
-	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-io-server/releases/download/v1.7.0/ophidia-io-server-1.7.0-0.el7.centos.x86_64.rpm && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-io-server/releases/download/v1.7.1/ophidia-io-server-1.7.1-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-io-server-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	sed -i "s/127.0.0.1/0.0.0.0/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf && \
@@ -156,7 +156,7 @@ RUN if [ "$thread_safe" = "yes" ] ; then \
 	cd /usr/local/ophidia/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-analytics-framework && \
 	cd ophidia-analytics-framework && \
-	#git checkout master && \
+	git checkout master && \
 	eval `/usr/bin/modulecmd bash load /etc/modulefiles/mpi/mpich-3.0-x86_64` && \
 	./bootstrap > /dev/null 2>&1 && \
 	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-parallel-netcdf --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ophidiaio-server-path=/usr/local/ophidia/oph-cluster/oph-io-server --enable-cfitsio > /dev/null 2>&1 && \
@@ -167,7 +167,7 @@ RUN if [ "$thread_safe" = "yes" ] ; then \
 USER root
 
 RUN if [ "$thread_safe" != "yes" ] ; then \
-	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-analytics-framework/releases/download/v1.7.0/ophidia-analytics-framework-1.7.0-0.el7.centos.x86_64.rpm && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-analytics-framework/releases/download/v1.7.1/ophidia-analytics-framework-1.7.1-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-analytics-framework-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
@@ -185,7 +185,7 @@ RUN if [ "$thread_safe" != "yes" ] ; then yum -y install openssl-devel jansson-d
 	rm -rf /repo/*
 
 #OPHIDIA SERVER
-RUN cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-server/releases/download/v1.7.0/ophidia-server-1.7.0-0.el7.centos.x86_64.rpm && \
+RUN cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-server/releases/download/v1.7.1/ophidia-server-1.7.1-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-server-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
