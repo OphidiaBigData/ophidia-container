@@ -118,7 +118,7 @@ RUN if [ "$thread_safe" = "yes" ] ; then \
 	cd ophidia-io-server && \
 	git checkout master && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-io-server --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ > /dev/null 2>&1 && \
+	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-io-server --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --enable-parallel-nc4 > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	mkdir -p /usr/local/ophidia/oph-cluster/oph-io-server/data1/var && \
@@ -298,20 +298,23 @@ COPY server_scripts/oph_submit.sh slurm*.conf /usr/local/ophidia/extra/etc/
 RUN if [ "$slurm" = "yes" ] ; then rm /usr/local/ophidia/extra/etc/oph_submit.sh && chown -R ophidia:ophidia /usr/local/ophidia/extra/etc/ ; fi
 
 ENV CONDA_DIR=/opt/conda
-RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh && \
+RUN if [ "$jupyter" = "yes" ] ; then \
+    wget -q https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh && \
     bash Miniconda3-py38_4.12.0-Linux-x86_64.sh -b -p /opt/conda && \
-    rm -r Miniconda3-py38_4.12.0-Linux-x86_64.sh         
+    rm -r Miniconda3-py38_4.12.0-Linux-x86_64.sh; else echo Skipping Jupyter step 1 of 3 ; fi
 ENV PATH=$CONDA_DIR/bin:$PATH
 
 USER ophidia
 ENV PATH=$CONDA_DIR/bin:$PATH
 ADD environment.yml /tmp/environment.yml
-RUN conda env create -f /tmp/environment.yml -p /usr/local/ophidia/env 
+RUN if [ "$jupyter" = "yes" ] ; then \
+    conda env create -f /tmp/environment.yml -p /usr/local/ophidia/env; else echo Skipping Jupyter step 2 of 3 ; fi
 USER root
 RUN rm -r /tmp/environment.yml
 USER ophidia
 
-RUN echo "source activate /usr/local/ophidia/env" > ~/.bashrc
+RUN if [ "$jupyter" = "yes" ] ; then \
+    echo "source activate /usr/local/ophidia/env" > ~/.bashrc; fi
 ENV PATH=/usr/local/ophidia/env/bin:$PATH
 
 ENV PATH=$PATH:/usr/local/ophidia/proj/bin:/usr/local/ophidia/.local/bin
@@ -325,7 +328,14 @@ RUN if [ "$jupyter" = "yes" ] ; then \
 	sed -i "s/ioserver='mysql_table'/ioserver='ophidiaio_memory'/g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
 	sed -i "s/ioserver=\"mysql_table\"/ioserver=\"ophidiaio_memory\"/g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
 	sed -i "s/mysql_table|//g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
-	printf "\nYour jupyter password is:\t\'ophidia\'\n"; fi
+	printf "\nYour jupyter password is:\t\'ophidia\'\n"; else echo Skipping Jupyter step 3 of 3 ; fi
+RUN if [ "$jupyter" = "yes" ] ; then \
+    cd /tmp && \
+    git clone https://github.com/OphidiaBigData/esdm-pav-client.git && \
+    cd esdm-pav-client/ && \
+    #git checkout master && \
+    pip install -e . && \
+    rm -rf /tmp/esdm-pav-client; fi
 USER root
 
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/oph-server/etc/script/oph_submit.sh
