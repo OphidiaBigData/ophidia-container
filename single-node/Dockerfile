@@ -330,12 +330,11 @@ RUN if [ "$jupyter" = "yes" ] ; then \
 	sed -i "s/mysql_table|//g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
 	printf "\nYour jupyter password is:\t\'ophidia\'\n"; else echo Skipping Jupyter step 3 of 3 ; fi
 RUN if [ "$jupyter" = "yes" ] ; then \
-    cd /tmp && \
+    cd /usr/local/ophidia/env/lib/python3.8/ && \
     git clone https://github.com/OphidiaBigData/esdm-pav-client.git && \
     cd esdm-pav-client/ && \
     #git checkout master && \
-    pip install -e . && \
-    rm -rf /tmp/esdm-pav-client; fi
+    pip install -e .; fi
 USER root
 
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/oph-server/etc/script/oph_submit.sh
