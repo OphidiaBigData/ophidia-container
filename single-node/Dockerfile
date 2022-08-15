@@ -335,6 +335,8 @@ RUN if [ "$jupyter" = "yes" ] ; then \
     cd esdm-pav-client/ && \
     #git checkout master && \
     pip install -e .; fi
+RUN if [ "$jupyter" = "yes" ] ; then \
+    conda clean -y --all; fi
 USER root
 
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/oph-server/etc/script/oph_submit.sh
