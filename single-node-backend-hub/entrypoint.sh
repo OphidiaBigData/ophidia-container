@@ -14,6 +14,17 @@ then
 	sed -i "s/#ServerName.*/ServerName ${HOSTNAME}/g" /etc/httpd/conf/httpd.conf
 	/usr/sbin/apachectl -DBACKGROUND
 
+  chmod +x /root/fix_logs_permission.sh
+	/usr/sbin/crond -n &>/dev/null &
+
+#
+	mkdir -p /home/jovyan/ophidia_logs
+	chown jovyan:users /home/jovyan/ophidia_logs/
+	chmod 777 /home/jovyan/ophidia_logs/
+	cd /usr/local/ophidia/oph-cluster/oph-analytics-framework/log/
+	ln -s /home/jovyan/ophidia_logs oph-test
+#
+
 	su - ophidia <<EOF
 
 	sed -i "s/MEMORY_BUFFER=.*/MEMORY_BUFFER=${OPH_COMPONENT_MEM_LIMIT}/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf
@@ -30,6 +41,7 @@ then
 	/usr/local/ophidia/oph-cluster/oph-io-server/bin/oph_io_server -d -i 1 > /dev/null 2>&1 &
 	/usr/local/ophidia/oph-server/bin/oph_server -d &>/dev/null &
 	wait
+
 EOF
 
 elif [ $CONTAINERIZER == "udocker" ]
@@ -57,10 +69,21 @@ then
 	#sed -i "s/#ServerName.*/ServerName ${HOSTNAME}/g" /etc/httpd/conf/httpd.conf
 	#/usr/sbin/apachectl -DBACKGROUND
 
+	chmod +x /root/fix_logs_permission.sh
+	/usr/sbin/crond -n &>/dev/null &
+
+#
+	mkdir -p /home/jovyan/ophidia_logs
+	chown jovyan:users /home/jovyan/ophidia_logs/
+	chmod 777 /home/jovyan/ophidia_logs/
+	cd /usr/local/ophidia/oph-cluster/oph-analytics-framework/log/
+	ln -s /home/jovyan/ophidia_logs oph-test
+#
 	su - ophidia <<EOF
 
 	sed -i "s/MEMORY_BUFFER=.*/MEMORY_BUFFER=${OPH_COMPONENT_MEM_LIMIT}/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf
 	sed -i "s/MEMORY=.*/MEMORY=${OPH_COMPONENT_MEM_LIMIT}/g" /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration
+
 
 	cd /usr/local/ophidia/
 	HOSTNAME=`hostname -I | awk '{print $1}'`
