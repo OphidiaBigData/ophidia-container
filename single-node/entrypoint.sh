@@ -15,7 +15,7 @@ function finalize_deploy()
 		export OPH_SERVER_PORT="11732"
 		export OPH_SERVER_HOST="127.0.0.1"
 		export OPH_PASSWD="abcd"
-		su -c "jupyter-notebook --no-browser --notebook-dir=/home/ophidia/ --port=$JUPYTER_PORT --ip=$HOSTNAME &" ophidia
+		su -c "jupyter-lab --no-browser --notebook-dir=/home/ophidia/ --port=$JUPYTER_PORT --ip=$HOSTNAME &" ophidia
 		wait
 	fi
 }

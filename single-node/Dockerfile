@@ -3,11 +3,12 @@ FROM centos:7
 LABEL author="CMCC Foundation" description="Ophidia HPDA Framework"
 
 ARG slurm=no
-ARG offline_ophidia=no
 ARG thread_safe=yes
 ARG jupyter=no
 
 USER root
+
+RUN rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
 
 RUN cd / && \
 	yum -y update yum && \
@@ -28,7 +29,7 @@ RUN chmod -R 777 /var/lib/mysql && \
 	groupmod -g 1000 ophidia && \
 	chown -R ophidia:ophidia /usr/local/ophidia
 
-ADD server_scripts/oph_submit.sh offline_ophidia_*.tar.gz /offline_ophidia/
+ADD server_scripts/oph_submit.sh /offline_ophidia/
 
 USER mysql
 RUN mysqld --initialize-insecure && \
@@ -55,8 +56,7 @@ RUN yum -y install compat-guile18 compat-guile18-devel flex flex-devel guile-dev
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	#OPHIDIA PRIMITIVES
-	if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia && rm oph_submit.sh ; \
-	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-primitives-1.6.0-0.el7.centos.x86_64.rpm ; fi && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v1.7.1/ophidia-primitives-1.7.1-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-primitives-*.rpm && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	rm -rf /repo/* && \
@@ -116,9 +116,9 @@ RUN if [ "$thread_safe" = "yes" ] ; then \
 	cd /usr/local/ophidia/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-io-server && \
 	cd ophidia-io-server && \
-	#git checkout master && \
+	git checkout master && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-io-server --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ > /dev/null 2>&1 && \
+	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-io-server --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --enable-parallel-nc4 > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	mkdir -p /usr/local/ophidia/oph-cluster/oph-io-server/data1/var && \
@@ -127,8 +127,7 @@ RUN if [ "$thread_safe" = "yes" ] ; then \
 USER root
 
 RUN if [ "$thread_safe" != "yes" ] ; then \
-	if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-io-server-1.6.0-0.el7.centos.x86_64.rpm ; fi && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-io-server/releases/download/v1.7.1/ophidia-io-server-1.7.1-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-io-server-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	sed -i "s/127.0.0.1/0.0.0.0/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf && \
@@ -157,7 +156,7 @@ RUN if [ "$thread_safe" = "yes" ] ; then \
 	cd /usr/local/ophidia/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-analytics-framework && \
 	cd ophidia-analytics-framework && \
-	#git checkout master && \
+	git checkout master && \
 	eval `/usr/bin/modulecmd bash load /etc/modulefiles/mpi/mpich-3.0-x86_64` && \
 	./bootstrap > /dev/null 2>&1 && \
 	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-parallel-netcdf --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ophidiaio-server-path=/usr/local/ophidia/oph-cluster/oph-io-server --enable-cfitsio > /dev/null 2>&1 && \
@@ -168,8 +167,7 @@ RUN if [ "$thread_safe" = "yes" ] ; then \
 USER root
 
 RUN if [ "$thread_safe" != "yes" ] ; then \
-	if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-analytics-framework-1.6.1-0.el7.centos.x86_64.rpm ; fi && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-analytics-framework/releases/download/v1.7.1/ophidia-analytics-framework-1.7.1-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-analytics-framework-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
@@ -187,8 +185,7 @@ RUN if [ "$thread_safe" != "yes" ] ; then yum -y install openssl-devel jansson-d
 	rm -rf /repo/*
 
 #OPHIDIA SERVER
-RUN if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-server-1.6.2-0.el7.centos.x86_64.rpm ; fi && \
+RUN cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-server/releases/download/v1.7.1/ophidia-server-1.7.1-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-server-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
@@ -235,8 +232,7 @@ RUN yum -y install mod_ssl php-mysql php-devel php-gd php-pecl-memcache php-pspe
 	openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -out server.crt -keyout server.key -subj "/"
 
 #OPHIDIA TERMINAL
-RUN if [ "$offline_ophidia" = "yes" ] ; then cd /offline_ophidia ; \
-	else cd /repo && wget -q --no-check-certificate https://download.ophidia.cmcc.it/rpm/1.6/ophidia-terminal-1.6.0-0.el7.centos.x86_64.rpm ; fi && \
+RUN cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-terminal/releases/download/v1.7.0/ophidia-terminal-1.7.0-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-terminal-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	rm -rf /repo/*
@@ -301,42 +297,46 @@ RUN if [ "$slurm" = "yes" ] ; then \
 COPY server_scripts/oph_submit.sh slurm*.conf /usr/local/ophidia/extra/etc/
 RUN if [ "$slurm" = "yes" ] ; then rm /usr/local/ophidia/extra/etc/oph_submit.sh && chown -R ophidia:ophidia /usr/local/ophidia/extra/etc/ ; fi
 
-RUN if [ "$jupyter" = "yes" ] ; then yum -y install python36 python36-pip python36-devel geos geos-devel nodejs libtiff-devel libsqlite3x libsqlite3x-devel && yum -y clean all ; fi
+ENV CONDA_DIR=/opt/conda
+RUN if [ "$jupyter" = "yes" ] ; then \
+    wget -q https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh && \
+    bash Miniconda3-py38_4.12.0-Linux-x86_64.sh -b -p /opt/conda && \
+    rm -r Miniconda3-py38_4.12.0-Linux-x86_64.sh; else echo Skipping Jupyter step 1 of 3 ; fi
+ENV PATH=$CONDA_DIR/bin:$PATH
+
 USER ophidia
-RUN if [ "$jupyter" = "yes" ] ; then pip3 install -q --user jupyter notebook numpy matplotlib pyophidia scipy ; fi
-ENV PYTHONPATH=$PYTHONPATH:/usr/local/ophidia/.local/lib/python3.6/site-packages/
+ENV PATH=$CONDA_DIR/bin:$PATH
+ADD environment.yml /tmp/environment.yml
+RUN if [ "$jupyter" = "yes" ] ; then \
+    conda env create -f /tmp/environment.yml -p /usr/local/ophidia/env; else echo Skipping Jupyter step 2 of 3 ; fi
 USER root
-RUN if [ "$jupyter" = "yes" ] ; then \
-	npm install --silent -g configurable-http-proxy && \
-	mkdir -p /home/ophidia && chown ophidia:ophidia /home/ophidia ; fi
+RUN rm -r /tmp/environment.yml
 USER ophidia
+
 RUN if [ "$jupyter" = "yes" ] ; then \
-	cd /repo && \
-	wget -q https://download.osgeo.org/proj/proj-6.0.0.tar.gz && \
-	tar -xzf proj-6.0.0.tar.gz && \
-	cd proj-6.0.0 && \
-	mkdir -p $HOME/proj && \
-	./configure --prefix=$HOME/proj > /dev/null 2>&1 && make -s > /dev/null 2>&1 && make install -s > /dev/null 2>&1 && \
-	rm -rf /repo/* ; fi
+    echo "source activate /usr/local/ophidia/env" > ~/.bashrc; fi
+ENV PATH=/usr/local/ophidia/env/bin:$PATH
+
 ENV PATH=$PATH:/usr/local/ophidia/proj/bin:/usr/local/ophidia/.local/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ophidia/proj/lib:/usr/local/ophidia/.local/lib
+
 RUN if [ "$jupyter" = "yes" ] ; then \
-	pip3 install -q --user --no-binary shapely shapely && \
-	export CFLAGS="-I/usr/local/ophidia/proj/include" && \
-	export LDFLAGS="-L/usr/local/ophidia/proj/lib" && \
-	pip3 install -q --user cartopy && \
-	cd /repo/ && \
-	wget -q https://raw.githubusercontent.com/SciTools/cartopy/master/tools/cartopy_feature_download.py && \
-	python3 cartopy_feature_download.py physical && \
-	rm -rf /repo/* && \
 	mkdir -p /usr/local/ophidia/.jupyter/ && \
-	touch /usr/local/ophidia/.jupyter/jupyter_notebook_config.json && \
-	printf "{\n  \"NotebookApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_notebook_config.json && \
-	chmod 600 /usr/local/ophidia/.jupyter/jupyter_notebook_config.json && \
-	sed -i "s/ioserver='mysql_table'/ioserver='ophidiaio_memory'/g" /usr/local/ophidia/.local/lib/python3.6/site-packages/PyOphidia/cube.py && \
-	sed -i "s/ioserver=\"mysql_table\"/ioserver=\"ophidiaio_memory\"/g" /usr/local/ophidia/.local/lib/python3.6/site-packages/PyOphidia/cube.py && \
-	sed -i "s/mysql_table|//g" /usr/local/ophidia/.local/lib/python3.6/site-packages/PyOphidia/cube.py && \
-	printf "\nYour jupyter password is:\t\'ophidia\'\n"; fi
+	touch /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
+	printf "{\n  \"ServerApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
+	chmod 600 /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
+	sed -i "s/ioserver='mysql_table'/ioserver='ophidiaio_memory'/g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
+	sed -i "s/ioserver=\"mysql_table\"/ioserver=\"ophidiaio_memory\"/g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
+	sed -i "s/mysql_table|//g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
+	printf "\nYour jupyter password is:\t\'ophidia\'\n"; else echo Skipping Jupyter step 3 of 3 ; fi
+RUN if [ "$jupyter" = "yes" ] ; then \
+    cd /usr/local/ophidia/env/lib/python3.8/ && \
+    git clone https://github.com/OphidiaBigData/esdm-pav-client.git && \
+    cd esdm-pav-client/ && \
+    #git checkout master && \
+    pip install -e .; fi
+RUN if [ "$jupyter" = "yes" ] ; then \
+    conda clean -y --all; fi
 USER root
 
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/oph-server/etc/script/oph_submit.sh
@@ -348,6 +348,6 @@ EXPOSE 65000
 
 ENV JUPYTER=$jupyter
 
-LABEL SLURM=$slurm JUPYTER=$jupyter OFFLINE_OPHIDIA_RPMS=$offline_ophidia THREAD_SAFE=$thread_safe
+LABEL SLURM=$slurm JUPYTER=$jupyter THREAD_SAFE=$thread_safe
 
 ENTRYPOINT ["/entrypoint.sh"]

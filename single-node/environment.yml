@@ -1,0 +1,17 @@
+name: env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8
+  - bokeh
+  - cartopy
+  - jupyter
+  - jupyterlab
+  - matplotlib
+  - notebook
+  - numpy
+  - pandas
+  - pyophidia
+  - scipy
+  - shapely
+  - xarray
