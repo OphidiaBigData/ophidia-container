@@ -11,6 +11,8 @@ ARG branch=master
 
 USER root
 
+COPY CentOS-Base.repo /etc/yum.repos.d/CentOS-Base.repo
+
 RUN rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql-2022
 
 RUN cd / && \
@@ -112,7 +114,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	rm -rf /repo/* ; fi
 
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	echo "Using online io-server source code in order to enable thread-safe" && \
+	echo "Using online source code for Ophidia I/O Server" && \
 	yum -y install bison\* flex\* autoconf automake libtool\* && yum -y clean all ; fi
 
 USER ophidia
@@ -122,7 +124,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	cd /usr/local/ophidia/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-io-server && \
 	cd ophidia-io-server && \
-	git checkout master && \
+	git checkout $branch && \
 	./bootstrap > /dev/null 2>&1 && \
 	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-io-server --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --enable-parallel-nc4 > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
@@ -153,7 +155,7 @@ USER root
 
 #OPHIDIA ANALYTICS FRAMEWORK
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	echo "Using online analytics-framework source code" && \
+	echo "Using online source code for Ophidia Analytics Framework" && \
 	yum -y install jansson\* libxml2\* openssl-devel gsl gsl-devel libcurl libcurl-devel cfitsio cfitsio-devel && yum -y clean all && \
 	mkdir -p /var/www/html/ophidia && \
 	chown ophidia:ophidia /var/www/html/ophidia ; fi
@@ -196,7 +198,7 @@ RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then yum -y instal
 
 #OPHIDIA SERVER
 RUN if [ "$devel" = "yes" ] ; then \
-	echo "Using online server source code" && \
+	echo "Using online source code for Ophidia Server" && \
 	yum -y install compat-guile18 compat-guile18-devel flex-devel guile-devel guile bison openssl-devel curl libcurl-devel libxml2\* jansson\* libssh2\* && yum -y clean all && \
 	mkdir -p /var/www/html/ophidia && \
 	chown ophidia:ophidia /var/www/html/ophidia ; fi
@@ -210,7 +212,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 	cd ophidia-server && \
 	git checkout $branch && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-server --with-framework-path=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-webaccess --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ws-hostname=localhost --with-matheval-path=/usr/local/ophidia/extra/lib > /dev/null 2>&1 && \
+	./configure --prefix=/usr/local/ophidia/oph-server --with-framework-path=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-webaccess --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ws-hostname=localhost --with-matheval-path=/usr/local/ophidia/extra/lib > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /usr/local/ophidia/src ; fi
@@ -265,10 +267,33 @@ RUN yum -y install mod_ssl php-mysql php-devel php-gd php-pecl-memcache php-pspe
 	openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -out server.crt -keyout server.key -subj "/"
 
 #OPHIDIA TERMINAL
-RUN cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-terminal/releases/download/v$version/ophidia-terminal-$version-0.el7.centos.x86_64.rpm && \
+RUN if [ "$devel" = "yes" ] ; then \
+	echo "Using online source code for Ophidia Terminal" && \
+	yum -y install graphviz\* gtk2\* jansson\* libxml2\* openssl-devel curl libcurl-devel policycoreutils-python readline\* && yum -y clean all && \
+	mkdir -p /var/www/html/ophidia && \
+	chown ophidia:ophidia /var/www/html/ophidia ; fi
+
+USER ophidia
+
+RUN if [ "$devel" = "yes" ] ; then \
+	mkdir -p /usr/local/ophidia/src && \
+	cd /usr/local/ophidia/src && \
+	git clone https://github.com/OphidiaBigData/ophidia-terminal && \
+	cd ophidia-terminal && \
+	git checkout $branch && \
+	./bootstrap > /dev/null 2>&1 && \
+	./configure --prefix=/usr/local/ophidia/oph-terminal --disable-xml-ssl-check --disable-xml-removal > /dev/null 2>&1 && \
+	make -s > /dev/null 2>&1 && \
+	make install -s > /dev/null 2>&1 && \
+	rm -rf /usr/local/ophidia/src ; fi
+
+USER root
+
+RUN if [ "$devel" != "yes" ] ; then \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-terminal/releases/download/v$version/ophidia-terminal-$version-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-terminal-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
-	rm -rf /repo/*
+	rm -rf /repo/*; fi
 
 #OPERATORS_FIXES
 RUN cd /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/operators_xml/ && \
@@ -294,18 +319,20 @@ RUN if [ "$devel" = "yes" ] ; then \
 
 USER ophidia
 
-#PyOphidia
 RUN if [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for PyOphidia" && \
 	mkdir -p /usr/local/ophidia/src && \
 	cd /usr/local/ophidia/src && \
 	git clone https://github.com/OphidiaBigData/PyOphidia && \
 	cd PyOphidia && \
-	git checkout $branch && \
-	pip install -e . &&  \
-	rm -rf /usr/local/ophidia/src ; fi
+	git checkout $branch ; fi
 
 USER root
+
+RUN if [ "$devel" = "yes" ] ; then \
+	cd /usr/local/ophidia/src/PyOphidia && \
+	python3 setup.py install &&  \
+	rm -rf /usr/local/ophidia/src ; fi
 
 RUN if [ "$slurm" = "no" ] ; then echo "No internal resource manager" ; else echo "Slurm will be the internal resource manager" ; fi
 #SHELL ["/bin/bash", "-c"]
@@ -323,7 +350,7 @@ RUN if [ "$slurm" = "yes" ] ; then \
 	chown -R munge:munge /var/lib/munge && \
 	chown -R munge:munge /var/log/munge && \
 	chown -R munge:munge /var/run/munge && \
-	echo "127.0.0.1 localhost localhost.localdomain" >> /etc/hosts ; else echo Skipping Munge ; fi
+	echo "127.0.0.1 localhost localhost.localdomain" >> /etc/hosts ; else echo "Skipping Munge" ; fi
 
 RUN if [ "$slurm" = "yes" ] ; then \
 	yum -y install sudo bzip2 slurm python3 openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel man2html libibmad libibumad && \
@@ -333,7 +360,7 @@ RUN if [ "$slurm" = "yes" ] ; then \
 	curl -k -O https://download.schedmd.com/slurm/slurm-20.11.7.tar.bz2 && \
 	mkdir -p /usr/local/ophidia/extra/etc && \
 	bunzip2 slurm-20.11.7.tar.bz2 && \
-	tar -xf slurm-20.11.7.tar ; else echo Skipping Slurm step 1 of 3; fi
+	tar -xf slurm-20.11.7.tar ; else echo "Skipping Slurm step 1 of 3"; fi
 
 USER ophidia
 
@@ -341,7 +368,7 @@ RUN if [ "$slurm" = "yes" ] ; then \
 	cd /repo/slurm-20.11.7 && \
 	./configure --prefix=/usr/local/ophidia/extra > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
-	make install -s > /dev/null 2>&1 ; else echo Skipping Slurm step 2 of 3 ; fi
+	make install -s > /dev/null 2>&1 ; else echo "Skipping Slurm step 2 of 3" ; fi
 
 USER root
 
@@ -352,7 +379,7 @@ RUN if [ "$slurm" = "yes" ] ; then \
 	mkdir -p /var/run/slurm && chown ophidia:ophidia /var/run/slurm && \
 	mkdir -p /var/spool/slurm && chown ophidia:ophidia /var/spool/slurm && \
 	mkdir -p /var/spool/slurmd && chown ophidia:ophidia /var/spool/slurmd && \
-	mkdir -p /var/log/slurmctld && chown ophidia:ophidia /var/log/slurmctld/ ; else echo Skipping Slurm step 3 of 3 ; fi
+	mkdir -p /var/log/slurmctld && chown ophidia:ophidia /var/log/slurmctld/ ; else echo "Skipping Slurm step 3 of 3" ; fi
 COPY server_scripts/oph_submit.sh slurm*.conf /usr/local/ophidia/extra/etc/
 RUN if [ "$slurm" = "yes" ] ; then rm /usr/local/ophidia/extra/etc/oph_submit.sh && chown -R ophidia:ophidia /usr/local/ophidia/extra/etc/ ; fi
 
@@ -360,7 +387,7 @@ ENV CONDA_DIR=/opt/conda
 RUN if [ "$jupyter" = "yes" ] ; then \
     wget -q https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh && \
     bash Miniconda3-py38_4.12.0-Linux-x86_64.sh -b -p /opt/conda && \
-    rm -r Miniconda3-py38_4.12.0-Linux-x86_64.sh; else echo Skipping Jupyter step 1 of 3 ; fi
+    rm -r Miniconda3-py38_4.12.0-Linux-x86_64.sh; else echo "Skipping Jupyter step 1 of 3" ; fi
 ENV PATH=$CONDA_DIR/bin:$PATH
 
 USER ophidia
@@ -368,7 +395,7 @@ USER ophidia
 ENV PATH=$CONDA_DIR/bin:$PATH
 ADD environment.yml /tmp/environment.yml
 RUN if [ "$jupyter" = "yes" ] ; then \
-    conda env create -f /tmp/environment.yml -p /usr/local/ophidia/env; else echo Skipping Jupyter step 2 of 3 ; fi
+    conda env create -f /tmp/environment.yml -p /usr/local/ophidia/env; else echo "Skipping Jupyter step 2 of 3" ; fi
 
 USER root
 
@@ -391,7 +418,7 @@ RUN if [ "$jupyter" = "yes" ] ; then \
 	sed -i "s/ioserver='mysql_table'/ioserver='ophidiaio_memory'/g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
 	sed -i "s/ioserver=\"mysql_table\"/ioserver=\"ophidiaio_memory\"/g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
 	sed -i "s/mysql_table|//g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
-	printf "\nYour jupyter password is:\t\'ophidia\'\n"; else echo Skipping Jupyter step 3 of 3 ; fi
+	printf "\nYour jupyter password is:\t\'ophidia\'\n"; else echo "Skipping Jupyter step 3 of 3" ; fi
 RUN if [ "$jupyter" = "yes" ] ; then \
     cd /usr/local/ophidia/env/lib/python3.8/ && \
     git clone https://github.com/OphidiaBigData/PyOphidia.git && \
