@@ -2,7 +2,7 @@
 
 function finalize_deploy()
 {
-	cd /home/ophidia/
+	cd /usr/local/ophidia
 	if [[ $CLIENT_SERVICE == "terminal" ]]
 	then
 		su -c "/usr/local/ophidia/oph-terminal/bin/oph_term -H 127.0.0.1 -u oph-test -p abcd -P 11732" ophidia
@@ -15,7 +15,7 @@ function finalize_deploy()
 		export OPH_SERVER_PORT="11732"
 		export OPH_SERVER_HOST="127.0.0.1"
 		export OPH_PASSWD="abcd"
-		su -c "jupyter-lab --no-browser --notebook-dir=/home/ophidia/ --port=$JUPYTER_PORT --ip=$HOSTNAME &" ophidia
+		su -c "jupyter-lab --no-browser --notebook-dir=/usr/local/ophidia --port=$JUPYTER_PORT --ip=$HOSTNAME &" ophidia
 		wait
 	fi
 }

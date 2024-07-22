@@ -201,7 +201,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Server" && \
 	yum -y install compat-guile18 compat-guile18-devel flex-devel guile-devel guile bison openssl-devel curl libcurl-devel libxml2\* jansson\* libssh2\* && yum -y clean all && \
 	mkdir -p /var/www/html/ophidia && \
-	chown ophidia:ophidia /var/www/html/ophidia ; fi
+	chown -R ophidia:ophidia /var/www/html/ophidia ; fi
 
 USER ophidia
 
@@ -215,6 +215,11 @@ RUN if [ "$devel" = "yes" ] ; then \
 	./configure --prefix=/usr/local/ophidia/oph-server --with-framework-path=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-webaccess --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ws-hostname=localhost --with-matheval-path=/usr/local/ophidia/extra/lib > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
+	mv authz /usr/local/ophidia/oph-server/ && \
+	mkdir -p /usr/local/ophidia/oph-server/log && \
+	mkdir -p /usr/local/ophidia/oph-server/authz/sessions && \
+	mkdir -p /var/www/html/ophidia/sessions && \
+	touch /usr/local/ophidia/oph-server/log/server.log && \
 	rm -rf /usr/local/ophidia/src ; fi
 
 USER root
