@@ -3,7 +3,7 @@
 ## Requirements:
 - Linux Kernel (tested on CentOS 7 OS and Windows Subsystem for Linux 2 Kernel)
 - Docker for Linux (tested with >=v17) or Docker Desktop for Windows (tested with >=v4.0.1 on engine >=20.10.8)
-- At least 2.7GB of free disk space (according to which option is activated). 
+- At least 4 GB of free disk space (according to which option is activated). 
 
 ## Image build instruction:
 To build the image run:

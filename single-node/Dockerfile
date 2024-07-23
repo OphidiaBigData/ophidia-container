@@ -8,6 +8,11 @@ ARG jupyter=no
 ARG version=1.8.0
 ARG devel=no
 ARG branch=master
+ARG branch_io_server=$branch
+ARG branch_analytics_framework=$branch
+ARG branch_server=$branch
+ARG branch_terminal=$branch
+ARG branch_pyophidia=$branch
 
 USER root
 
@@ -124,7 +129,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	cd /usr/local/ophidia/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-io-server && \
 	cd ophidia-io-server && \
-	git checkout $branch && \
+	git checkout $branch_io_server && \
 	./bootstrap > /dev/null 2>&1 && \
 	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-io-server --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --enable-parallel-nc4 > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
@@ -167,7 +172,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	cd /usr/local/ophidia/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-analytics-framework && \
 	cd ophidia-analytics-framework && \
-	git checkout $branch && \
+	git checkout $branch_analytics_framework && \
 	eval `/usr/bin/modulecmd bash load /etc/modulefiles/mpi/mpich-3.0-x86_64` && \
 	./bootstrap > /dev/null 2>&1 && \
 	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-parallel-netcdf --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ophidiaio-server-path=/usr/local/ophidia/oph-cluster/oph-io-server --enable-cfitsio > /dev/null 2>&1 && \
@@ -210,7 +215,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 	cd /usr/local/ophidia/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-server && \
 	cd ophidia-server && \
-	git checkout $branch && \
+	git checkout $branch_server && \
 	./bootstrap > /dev/null 2>&1 && \
 	./configure --prefix=/usr/local/ophidia/oph-server --with-framework-path=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-webaccess --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ws-hostname=localhost --with-matheval-path=/usr/local/ophidia/extra/lib > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
@@ -285,7 +290,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 	cd /usr/local/ophidia/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-terminal && \
 	cd ophidia-terminal && \
-	git checkout $branch && \
+	git checkout $branch_terminal && \
 	./bootstrap > /dev/null 2>&1 && \
 	./configure --prefix=/usr/local/ophidia/oph-terminal --disable-xml-ssl-check --disable-xml-removal > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
@@ -330,7 +335,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 	cd /usr/local/ophidia/src && \
 	git clone https://github.com/OphidiaBigData/PyOphidia && \
 	cd PyOphidia && \
-	git checkout $branch ; fi
+	git checkout $branch_pyophidia ; fi
 
 USER root
 
@@ -390,9 +395,9 @@ RUN if [ "$slurm" = "yes" ] ; then rm /usr/local/ophidia/extra/etc/oph_submit.sh
 
 ENV CONDA_DIR=/opt/conda
 RUN if [ "$jupyter" = "yes" ] ; then \
-    wget -q https://repo.anaconda.com/miniconda/Miniconda3-py38_4.12.0-Linux-x86_64.sh && \
-    bash Miniconda3-py38_4.12.0-Linux-x86_64.sh -b -p /opt/conda && \
-    rm -r Miniconda3-py38_4.12.0-Linux-x86_64.sh; else echo "Skipping Jupyter step 1 of 3" ; fi
+    wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
+    rm -r Miniconda3-latest-Linux-x86_64.sh; else echo "Skipping Jupyter step 1 of 3" ; fi
 ENV PATH=$CONDA_DIR/bin:$PATH
 
 USER ophidia
@@ -420,15 +425,15 @@ RUN if [ "$jupyter" = "yes" ] ; then \
 	touch /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
 	printf "{\n  \"ServerApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
 	chmod 600 /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
-	sed -i "s/ioserver='mysql_table'/ioserver='ophidiaio_memory'/g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
-	sed -i "s/ioserver=\"mysql_table\"/ioserver=\"ophidiaio_memory\"/g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
-	sed -i "s/mysql_table|//g" /usr/local/ophidia/env/lib/python3.8/site-packages/PyOphidia/cube.py && \
+	sed -i "s/ioserver='mysql_table'/ioserver='ophidiaio_memory'/g" /usr/local/ophidia/env/lib/python3.12/site-packages/PyOphidia/cube.py && \
+	sed -i "s/ioserver=\"mysql_table\"/ioserver=\"ophidiaio_memory\"/g" /usr/local/ophidia/env/lib/python3.12/site-packages/PyOphidia/cube.py && \
+	sed -i "s/mysql_table|//g" /usr/local/ophidia/env/lib/python3.12/site-packages/PyOphidia/cube.py && \
 	printf "\nYour jupyter password is:\t\'ophidia\'\n"; else echo "Skipping Jupyter step 3 of 3" ; fi
 RUN if [ "$jupyter" = "yes" ] ; then \
-    cd /usr/local/ophidia/env/lib/python3.8/ && \
+    cd /usr/local/ophidia/env/lib/python3.12/ && \
     git clone https://github.com/OphidiaBigData/PyOphidia.git && \
     cd PyOphidia/ && \
-    git checkout $branch && \
+    git checkout $branch_pyophidia && \
     pip install -e . ; fi
 RUN if [ "$jupyter" = "yes" ] ; then \
     conda clean -y --all; fi
