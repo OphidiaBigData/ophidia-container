@@ -5,6 +5,7 @@ LABEL author="CMCC Foundation" description="Ophidia HPDA Framework"
 ARG slurm=no
 ARG thread_safe=yes
 ARG jupyter=no
+ARG python=no
 ARG version=1.8.0
 ARG devel=no
 ARG branch=master
@@ -322,28 +323,6 @@ RUN cd /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/operators_xml/
 ENV OPH_TERM_VIEWER=coloured
 ENV OPH_TERM_FORMAT=extended_compact
 
-#PyOphidia
-RUN if [ "$devel" = "yes" ] ; then \
-	yum -y install python3 && \
-	yum -y clean all ; fi
-
-USER ophidia
-
-RUN if [ "$devel" = "yes" ] ; then \
-	echo "Using online source code for PyOphidia" && \
-	mkdir -p /usr/local/ophidia/src && \
-	cd /usr/local/ophidia/src && \
-	git clone https://github.com/OphidiaBigData/PyOphidia && \
-	cd PyOphidia && \
-	git checkout $branch_pyophidia ; fi
-
-USER root
-
-RUN if [ "$devel" = "yes" ] ; then \
-	cd /usr/local/ophidia/src/PyOphidia && \
-	python3 setup.py install &&  \
-	rm -rf /usr/local/ophidia/src ; fi
-
 RUN if [ "$slurm" = "no" ] ; then echo "No internal resource manager" ; else echo "Slurm will be the internal resource manager" ; fi
 #SHELL ["/bin/bash", "-c"]
 
@@ -394,7 +373,7 @@ COPY server_scripts/oph_submit.sh slurm*.conf /usr/local/ophidia/extra/etc/
 RUN if [ "$slurm" = "yes" ] ; then rm /usr/local/ophidia/extra/etc/oph_submit.sh && chown -R ophidia:ophidia /usr/local/ophidia/extra/etc/ ; fi
 
 ENV CONDA_DIR=/opt/conda
-RUN if [ "$jupyter" = "yes" ] ; then \
+RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
     wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
     bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
     rm -r Miniconda3-latest-Linux-x86_64.sh; else echo "Skipping Jupyter step 1 of 3" ; fi
@@ -404,7 +383,7 @@ USER ophidia
 
 ENV PATH=$CONDA_DIR/bin:$PATH
 ADD environment.yml /tmp/environment.yml
-RUN if [ "$jupyter" = "yes" ] ; then \
+RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
     conda env create -f /tmp/environment.yml -p /usr/local/ophidia/env; else echo "Skipping Jupyter step 2 of 3" ; fi
 
 USER root
@@ -413,29 +392,29 @@ RUN rm -r /tmp/environment.yml
 
 USER ophidia
 
-RUN if [ "$jupyter" = "yes" ] ; then \
+RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
     echo "source activate /usr/local/ophidia/env" > ~/.bashrc; fi
 ENV PATH=/usr/local/ophidia/env/bin:$PATH
 
 ENV PATH=$PATH:/usr/local/ophidia/proj/bin:/usr/local/ophidia/.local/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ophidia/proj/lib:/usr/local/ophidia/.local/lib
 
-RUN if [ "$jupyter" = "yes" ] ; then \
+RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	mkdir -p /usr/local/ophidia/.jupyter/ && \
 	touch /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
 	printf "{\n  \"ServerApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
 	chmod 600 /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
-	sed -i "s/ioserver='mysql_table'/ioserver='ophidiaio_memory'/g" /usr/local/ophidia/env/lib/python3.12/site-packages/PyOphidia/cube.py && \
-	sed -i "s/ioserver=\"mysql_table\"/ioserver=\"ophidiaio_memory\"/g" /usr/local/ophidia/env/lib/python3.12/site-packages/PyOphidia/cube.py && \
-	sed -i "s/mysql_table|//g" /usr/local/ophidia/env/lib/python3.12/site-packages/PyOphidia/cube.py && \
+	sed -i "s/ioserver='mysql_table'/ioserver='ophidiaio_memory'/g" /usr/local/ophidia/env/lib/python3.10/site-packages/PyOphidia/cube.py && \
+	sed -i "s/ioserver=\"mysql_table\"/ioserver=\"ophidiaio_memory\"/g" /usr/local/ophidia/env/lib/python3.10/site-packages/PyOphidia/cube.py && \
+	sed -i "s/mysql_table|//g" /usr/local/ophidia/env/lib/python3.10/site-packages/PyOphidia/cube.py && \
 	printf "\nYour jupyter password is:\t\'ophidia\'\n"; else echo "Skipping Jupyter step 3 of 3" ; fi
-RUN if [ "$jupyter" = "yes" ] ; then \
-    cd /usr/local/ophidia/env/lib/python3.12/ && \
+RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+    cd /usr/local/ophidia/env/lib/python3.10/ && \
     git clone https://github.com/OphidiaBigData/PyOphidia.git && \
     cd PyOphidia/ && \
     git checkout $branch_pyophidia && \
     pip install -e . ; fi
-RUN if [ "$jupyter" = "yes" ] ; then \
+RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
     conda clean -y --all; fi
 
 USER root
@@ -448,6 +427,7 @@ EXPOSE 8888
 EXPOSE 65000
 
 ENV JUPYTER=$jupyter
+ENV PYTHON=$python
 
 LABEL SLURM=$slurm JUPYTER=$jupyter THREAD_SAFE=$thread_safe
 

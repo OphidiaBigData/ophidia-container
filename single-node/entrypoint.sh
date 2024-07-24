@@ -2,49 +2,51 @@
 
 function finalize_deploy()
 {
+	export OPH_SERVER_HOST="127.0.0.1"
+	export OPH_SERVER_PORT="11732"
+	export OPH_USER="oph-test"
+	export OPH_PASSWD="abcd"
 	cd /usr/local/ophidia
 	if [[ $CLIENT_SERVICE == "terminal" ]]
 	then
-		su -c "/usr/local/ophidia/oph-terminal/bin/oph_term -H 127.0.0.1 -u oph-test -p abcd -P 11732" ophidia
+		su -c "/usr/local/ophidia/oph-terminal/bin/oph_term" ophidia
 	elif [[ $CLIENT_SERVICE == "terminal_only" ]]
 	then
-		su -c "/usr/local/ophidia/oph-terminal/bin/oph_term -H $SERVER_IP -u $OPH_USER -p $OPH_PWD -P $SERVER_PORT" ophidia
+		su -c "/usr/local/ophidia/oph-terminal/bin/oph_term -H $_SERVER_HOST -P $_SERVER_PORT -u $_USER -p $_PASSWD" ophidia
 	elif [[ $CLIENT_SERVICE == "jupyter" ]]
 	then
-		export OPH_USER="oph-test"
-		export OPH_SERVER_PORT="11732"
-		export OPH_SERVER_HOST="127.0.0.1"
-		export OPH_PASSWD="abcd"
 		su -c "jupyter-lab --no-browser --notebook-dir=/usr/local/ophidia --port=$JUPYTER_PORT --ip=$HOSTNAME &" ophidia
 		wait
+	elif [[ $CLIENT_SERVICE == "python" ]]
+	then
+		su -c "python" ophidia
 	fi
 }
 
 trap finalize_deploy EXIT
 
-if [ $JUPYTER == "no" ]
+if [ $JUPYTER == "yes" ]
 then
-	CLIENT_SERVICE=${DEPLOY:-'terminal'}
-else
 	CLIENT_SERVICE=${DEPLOY:-'jupyter'}
+elif [ $PYTHON == "yes" ]
+then
+	CLIENT_SERVICE=${DEPLOY:-'python'}
+else
+	CLIENT_SERVICE=${DEPLOY:-'terminal'}
 fi
 
-if [ $CLIENT_SERVICE == "terminal" ]
+OPH_COMPONENT_MEM_LIMIT="$((${MEMORY:-2048}/2))"
+[ -z "$DEBUG" ] && DEBUG="" || DEBUG="-d"
+if [ $CLIENT_SERVICE == "terminal_only" ]
 then
-	OPH_COMPONENT_MEM_LIMIT="$((${MEMORY:-2048}/2))"
-	[ -z "$DEBUG" ] && DEBUG="" || DEBUG="-d"
-elif [ $CLIENT_SERVICE == "terminal_only" ]
-then
-	SERVER_IP=${OPH_SERVER_HOST:-'172.17.0.3'}
-	SERVER_PORT=${OPH_SERVER_PORT:-'11732'}
-	OPH_USER=${OPH_USER:-'oph-test'}
-	OPH_PWD=${OPH_PASSWD:-'abcd'}
+	_SERVER_HOST=${OPH_SERVER_HOST:-'172.17.0.3'}
+	_SERVER_PORT=${OPH_SERVER_PORT:-'11732'}
+	_USER=${OPH_USER:-'oph-test'}
+	_PASSWD=${OPH_PASSWD:-'abcd'}
 	exit
 elif [ $CLIENT_SERVICE == "jupyter" ]
 then
 	JUPYTER_PORT=${UI_PORT:=8888}
-	OPH_COMPONENT_MEM_LIMIT="$((${MEMORY:-2048}/2))"
-	[ -z "$DEBUG" ] && DEBUG="" || DEBUG="-d"
 fi
 
 [ -d '/var/run/slurm' ] && SLURM_BUILD=true || SLURM_BUILD=false
