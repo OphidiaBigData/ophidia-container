@@ -77,6 +77,7 @@ RUN yum -y install compat-guile18 compat-guile18-devel flex flex-devel guile-dev
 	yum -y clean all
 
 USER mysql
+
 RUN mysqld & &> /dev/null ;\
 	while [ ! -S /var/lib/mysql/mysql.sock ]; do sleep 1; done && \
 	MYSQL_PWD="abcd" mysql -u root mysql < /usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql && \
@@ -94,6 +95,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	yum -y install netcdf-devel netcdf-mpich-devel && \
 	yum -y install mpich-3.0-autoload.x86_64 && \
 	yum -y clean all ; fi
+
 #HDF5-MPICH THREAD-SAFE
 ENV MODULEPATH=/usr/share/Modules/modulefiles:/etc/modulefiles
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
@@ -106,6 +108,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* ; fi
+
 #NETCDF-MPICH
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	yum -y install git && yum -y clean all && \
@@ -369,6 +372,7 @@ RUN if [ "$slurm" = "yes" ] ; then \
 	mkdir -p /var/spool/slurm && chown ophidia:ophidia /var/spool/slurm && \
 	mkdir -p /var/spool/slurmd && chown ophidia:ophidia /var/spool/slurmd && \
 	mkdir -p /var/log/slurmctld && chown ophidia:ophidia /var/log/slurmctld/ ; else echo "Skipping Slurm step 3 of 3" ; fi
+
 COPY server_scripts/oph_submit.sh slurm*.conf /usr/local/ophidia/extra/etc/
 RUN if [ "$slurm" = "yes" ] ; then rm /usr/local/ophidia/extra/etc/oph_submit.sh && chown -R ophidia:ophidia /usr/local/ophidia/extra/etc/ ; fi
 
@@ -393,10 +397,9 @@ RUN rm -r /tmp/environment.yml
 USER ophidia
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    echo "source activate /usr/local/ophidia/env" > ~/.bashrc; fi
-ENV PATH=/usr/local/ophidia/env/bin:$PATH
+    echo "source activate /usr/local/ophidia/env" >> ~/.bashrc; fi
 
-ENV PATH=$PATH:/usr/local/ophidia/proj/bin:/usr/local/ophidia/.local/bin
+ENV PATH=/usr/local/ophidia/env/bin:$PATH:/usr/local/ophidia/proj/bin:/usr/local/ophidia/.local/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ophidia/proj/lib:/usr/local/ophidia/.local/lib
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
@@ -405,12 +408,16 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	printf "{\n  \"ServerApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
 	chmod 600 /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
 	printf "\nYour jupyter password is:\t\'ophidia\'\n"; else echo "Skipping Jupyter step 3 of 3" ; fi
+
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    cd /usr/local/ophidia/env/lib/python3.10/ && \
+    mkdir -p /usr/local/ophidia/src && \
+    cd /usr/local/ophidia/src && \
     git clone https://github.com/OphidiaBigData/PyOphidia.git && \
     cd PyOphidia/ && \
     git checkout $branch_pyophidia && \
-    pip install -e . ; fi
+    pip install . && \
+    rm -rf /usr/local/ophidia/src ; fi
+
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
     conda clean -y --all; fi
 
