@@ -58,6 +58,8 @@ MYSQL_PWD="abcd" mysql -u root -e "SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mod
 HOSTNAME=`hostname -I`
 sed -i "s/#ServerName.*/ServerName ${HOSTNAME}/g" /etc/httpd/conf/httpd.conf
 /usr/sbin/apachectl -DBACKGROUND
+sed -i "s/127.0.0.1/${HOSTNAME/' '/}/g" /usr/local/ophidia/oph-server/etc/server.conf
+sed -i "s/127.0.0.1/${HOSTNAME/' '/}/g" /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration
 
 if $SLURM_BUILD ; then
 	echo "127.0.0.1 localhost localhost.localdomain" >> /etc/hosts

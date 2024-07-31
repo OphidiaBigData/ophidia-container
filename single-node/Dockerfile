@@ -9,6 +9,7 @@ ARG python=no
 ARG version=1.8.0
 ARG devel=no
 ARG branch=master
+ARG branch_primitives=$branch
 ARG branch_io_server=$branch
 ARG branch_analytics_framework=$branch
 ARG branch_server=$branch
@@ -58,21 +59,43 @@ RUN mysqld --initialize-insecure && \
 
 USER root
 
+#LIBMATHEVAL
 RUN yum -y install compat-guile18 compat-guile18-devel flex flex-devel guile-devel guile bison openssl wget sed gcc make file && \
-	#LIBMATHEVAL
 	cd /repo && \
 	curl -s -O http://ftp.gnu.org/gnu/libmatheval/libmatheval-1.1.11.tar.gz && \
 	tar -xzf libmatheval-1.1.11.tar.gz && \
 	cd /repo/libmatheval-1.1.11 && \
 	./configure --prefix=/usr/local/ophidia/extra > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
+	make install -s > /dev/null 2>&1
+
+RUN if [ "$devel" = "yes" ] ; then \
+	echo "Using online source code for Ophidia Primitives" && \
+	yum -y install git gsl gsl-devel autoconf automake libtool\* zlib zlib-devel && yum -y clean all ; fi
+
+USER ophidia
+
+#OPHIDIA PRIMITIVES
+RUN if [ "$devel" = "yes" ] ; then \
+	mkdir -p /usr/local/ophidia/src && \
+	cd /usr/local/ophidia/src && \
+	git clone https://github.com/OphidiaBigData/ophidia-primitives && \
+	cd ophidia-primitives && \
+	git checkout $branch_primitives && \
+	./bootstrap > /dev/null 2>&1 && \
+	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-primitives --with-matheval-path=/usr/local/ophidia/extra/lib > /dev/null 2>&1 && \
+	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
-	#OPHIDIA PRIMITIVES
+	rm -rf /usr/local/ophidia/src ; fi
+
+USER root
+
+RUN if [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v$version/ophidia-primitives-$version-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-primitives-*.rpm && \
-	chown -R ophidia:ophidia /usr/local/ophidia && \
-	rm -rf /repo/* && \
-	cp /usr/local/ophidia/oph-cluster/oph-primitives/lib/liboph_*.so /usr/lib64/mysql/plugin && \
+	rm -rf /repo/* ; fi
+
+RUN cp /usr/local/ophidia/oph-cluster/oph-primitives/lib/liboph_*.so /usr/lib64/mysql/plugin && \
 	sed -i '/GRANT/d' /usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql && \
 	yum -y clean all
 
@@ -129,7 +152,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 USER ophidia
 
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	mkdir /usr/local/ophidia/src && \
+	mkdir -p /usr/local/ophidia/src && \
 	cd /usr/local/ophidia/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-io-server && \
 	cd ophidia-io-server && \
@@ -274,7 +297,7 @@ RUN openssl req -newkey rsa:1024 \
 	rm cacert.pem myserver.pem
 
 #WEB SERVER
-RUN yum -y install mod_ssl php-mysql php-devel php-gd php-pecl-memcache php-pspell php-snmp php-xmlrpc php-xml && \
+RUN yum -y install httpd mod_ssl php php-mysql php-devel php-gd php-pecl-memcache php-pspell php-snmp php-xmlrpc php-xml && \
 	yum -y clean all && \
 	mkdir -p /etc/httpd/conf/ssl && \
 	cd /etc/httpd/conf/ssl && \
