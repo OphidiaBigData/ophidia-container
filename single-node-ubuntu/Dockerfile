@@ -52,7 +52,7 @@ RUN apt install -y libfl-dev flex bison libmatheval-dev libmatheval1 openssl wge
 
 RUN if [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Primitives" && \
-	apt install -y gsl-bin libgslcblas0 libgsl-dev autoconf automake libtool\* && apt autoremove -y && apt clean -y ; fi
+	apt install -y gsl-bin libgslcblas0 libgsl-dev autoconf automake libtool\* pkg-config && apt autoremove -y && apt clean -y ; fi
 
 USER ophidia
 
