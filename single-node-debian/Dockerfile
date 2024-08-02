@@ -18,13 +18,17 @@ ARG branch_pyophidia=$branch
 USER root
 
 RUN cd / && \
-	apt-get update -y && \
-	apt-get install -y autoconf autotools-dev gcc make git libltdl-dev && \
-	apt-get install -y http://repo.mysql.com/mysql-apt-config_0.8.11-1_all.deb && \
-	apt-get install -y lsb-release && \
-	dpkg -i mysql-apt-config_0.8.11-1_all.deb && \
-	apt-get install -y mysql-community-client mysql-community-server libmysqlclient-dev && \
+	apt update -y && \
+	apt install -y wget && \
+	wget https://dev.mysql.com/get/mysql-apt-config_0.8.26-1_all.deb && \
+	apt install ./mysql-apt-config_*_all.deb && \
+	dpkg-reconfigure mysql-apt-config && \
+	apt update -y && \
+	apt install -y mysql-server && \
+	apt install -y mysql-client libmysqlclient-dev && \
 	apt autoremove -y && apt clean -y
+
+RUN apt install -y autoconf autotools-dev gcc make git libltdl-dev
 
 RUN chmod -R 777 /var/lib/mysql && \
 	chmod 777 /var/log/ && \
@@ -56,11 +60,11 @@ RUN mysqld --initialize-insecure && \
 USER root
 
 #LIBMATHEVAL
-RUN apt-get install -y guile-2.0-dev libfl-dev flex bison libmatheval-dev libmatheval1 openssl wget sed gcc make file
+RUN apt install -y guile-2.0-dev libfl-dev flex bison libmatheval-dev libmatheval1 openssl wget sed gcc make file
 
 RUN if [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Primitives" && \
-	apt-get install -y git gsl-bin libgsl23 libgsl-dev autoconf automake libtool\* zlib zlib-devel && apt autoremove -y && apt clean -y ; fi
+	apt install -y git gsl-bin libgsl23 libgsl-dev autoconf automake libtool\* zlib zlib-devel && apt autoremove -y && apt clean -y ; fi
 
 USER ophidia
 
@@ -81,7 +85,7 @@ USER root
 
 RUN if [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v$version/ophidia-primitives_$version*.deb && \
-	apt-get install -y ophidia-primitives_*.deb && \
+	apt install -y ophidia-primitives_*.deb && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	rm -rf /repo/* ; fi
 
@@ -102,11 +106,11 @@ USER root
 
 #OPHIDIA IO SERVER
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	apt-get install -y gcc-c++ zlib zlib-devel mpich-3.0.x86_64 mpich-3.0-devel.x86_64 mpich-3.0-autoload.x86_64 && \
+	apt install -y gcc-c++ zlib zlib-devel mpich-3.0.x86_64 mpich-3.0-devel.x86_64 mpich-3.0-autoload.x86_64 && \
 	apt autoremove -y && apt clean -y ; else \
-	apt-get install -y hdf5-devel hdf5-mpich-devel && \
-	apt-get install -y netcdf-devel netcdf-mpich-devel && \
-	apt-get install -y mpich-3.0-autoload.x86_64 && \
+	apt install -y hdf5-devel hdf5-mpich-devel && \
+	apt install -y netcdf-devel netcdf-mpich-devel && \
+	apt install -y mpich-3.0-autoload.x86_64 && \
 	apt autoremove -y && apt clean -y ; fi
 
 #HDF5-MPICH THREAD-SAFE
@@ -124,7 +128,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 
 #NETCDF-MPICH
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	apt-get install -y git && apt autoremove -y && apt clean -y && \
+	apt install -y git && apt autoremove -y && apt clean -y && \
 	cd /repo && \
 	git clone https://github.com/Unidata/netcdf-c.git && \
 	cd netcdf-c && \
@@ -137,7 +141,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia I/O Server" && \
-	apt-get install -y bison\* flex\* autoconf automake libtool\* && apt autoremove -y && apt clean -y ; fi
+	apt install -y bison\* flex\* autoconf automake libtool\* && apt autoremove -y && apt clean -y ; fi
 
 USER ophidia
 
@@ -159,7 +163,7 @@ USER root
 
 RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-io-server/releases/download/v$version/ophidia-io-server_$version*.deb && \
-	apt-get install -y ophidia-io-server_*.deb && apt autoremove -y && apt clean -y && \
+	apt install -y ophidia-io-server_*.deb && apt autoremove -y && apt clean -y && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	sed -i "s/127.0.0.1/0.0.0.0/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf && \
 	rm -rf /repo/* ; fi
@@ -178,7 +182,7 @@ USER root
 #OPHIDIA ANALYTICS FRAMEWORK
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Analytics Framework" && \
-	apt-get install -y jansson\* libxml2\* openssl-devel gsl gsl-devel libcurl libcurl-devel cfitsio cfitsio-devel && apt autoremove -y && apt clean -y && \
+	apt install -y jansson\* libxml2\* openssl-devel gsl gsl-devel libcurl libcurl-devel cfitsio cfitsio-devel && apt autoremove -y && apt clean -y && \
 	mkdir -p /var/www/html/ophidia && \
 	chown ophidia:ophidia /var/www/html/ophidia ; fi
 
@@ -202,13 +206,13 @@ USER root
 
 RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-analytics-framework/releases/download/v$version/ophidia-analytics-framework_$version*.deb && \
-	apt-get install -y ophidia-analytics-framework_*.deb && apt autoremove -y && apt clean -y && \
+	apt install -y ophidia-analytics-framework_*.deb && apt autoremove -y && apt clean -y && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
 	rm -rf /repo/* ; fi
 
 #CJOSE
-RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then apt-get install -y openssl-devel jansson-devel && apt autoremove -y && apt clean -y ; fi && \
+RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then apt install -y openssl-devel jansson-devel && apt autoremove -y && apt clean -y ; fi && \
 	cd /repo && \
 	curl -s -LOJk https://github.com/cisco/cjose/archive/0.4.1.tar.gz && \
 	tar -xzf cjose-0.4.1.tar.gz && \
@@ -221,7 +225,7 @@ RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then apt-get insta
 #OPHIDIA SERVER
 RUN if [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Server" && \
-	apt-get install -y compat-guile18 compat-guile18-devel flex-devel guile-devel guile bison openssl-devel curl libcurl-devel libxml2\* jansson\* libssh2\* && apt autoremove -y && apt clean -y && \
+	apt install -y compat-guile18 compat-guile18-devel flex-devel guile-devel guile bison openssl-devel curl libcurl-devel libxml2\* jansson\* libssh2\* && apt autoremove -y && apt clean -y && \
 	mkdir -p /var/www/html/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia ; fi
 
@@ -248,7 +252,7 @@ USER root
 
 RUN if [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-server/releases/download/v$version/ophidia-server_$version*.deb && \
-	apt-get install -y ophidia-server_*.deb && apt autoremove -y && apt clean -y && \
+	apt install -y ophidia-server_*.deb && apt autoremove -y && apt clean -y && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
 	touch /usr/local/ophidia/oph-server/log/server.log && \
@@ -287,7 +291,7 @@ RUN openssl req -newkey rsa:1024 \
 	rm cacert.pem myserver.pem
 
 #WEB SERVER
-RUN apt-get install -y apache2-bin php libapache2-mod-php && \
+RUN apt install -y apache2-bin php libapache2-mod-php && \
 	apt autoremove -y && apt clean -y && \
 	mkdir -p /etc/httpd/conf/ssl && \
 	cd /etc/httpd/conf/ssl && \
@@ -296,7 +300,7 @@ RUN apt-get install -y apache2-bin php libapache2-mod-php && \
 #OPHIDIA TERMINAL
 RUN if [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Terminal" && \
-	apt-get install -y graphviz\* gtk2\* jansson\* libxml2\* openssl-devel curl libcurl-devel policycoreutils-python readline\* && apt autoremove -y && apt clean -y && \
+	apt install -y graphviz\* gtk2\* jansson\* libxml2\* openssl-devel curl libcurl-devel policycoreutils-python readline\* && apt autoremove -y && apt clean -y && \
 	mkdir -p /var/www/html/ophidia && \
 	chown ophidia:ophidia /var/www/html/ophidia ; fi
 
@@ -318,7 +322,7 @@ USER root
 
 RUN if [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-terminal/releases/download/v$version/ophidia-terminal_$version*.deb && \
-	apt-get install -y ophidia-terminal_*.deb && apt autoremove -y && apt clean -y && \
+	apt install -y ophidia-terminal_*.deb && apt autoremove -y && apt clean -y && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	rm -rf /repo/*; fi
 
