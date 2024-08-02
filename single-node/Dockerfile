@@ -53,7 +53,7 @@ RUN mysqld --initialize-insecure && \
 	MYSQL_PWD="abcd" mysql -u root -e "CREATE DATABASE ophidiadb;" && \
 	MYSQL_PWD="abcd" mysql -u root -e "CREATE DATABASE oph_dimensions;" && \
 	cd /repo && \
-	curl -s -O -k https://raw.githubusercontent.com/OphidiaBigData/ophidia-analytics-framework/master/etc/ophidiadb.sql && \
+	curl -s -O -k https://raw.githubusercontent.com/OphidiaBigData/ophidia-analytics-framework/$branch_analytics_framework/etc/ophidiadb.sql && \
 	MYSQL_PWD="abcd" mysql -u root ophidiadb < /repo/ophidiadb.sql && \
 	rm -rf /repo/*
 

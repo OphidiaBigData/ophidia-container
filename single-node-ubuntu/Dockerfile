@@ -1,4 +1,4 @@
-FROM debian:12
+FROM ubuntu:24.04
 
 LABEL author="CMCC Foundation" description="Ophidia HPDA Framework"
 
@@ -19,52 +19,40 @@ USER root
 
 RUN cd / && \
 	apt update -y && \
-	apt install -y wget && \
-	wget https://dev.mysql.com/get/mysql-apt-config_0.8.26-1_all.deb && \
-	apt install ./mysql-apt-config_*_all.deb && \
-	dpkg-reconfigure mysql-apt-config && \
-	apt update -y && \
 	apt install -y mysql-server && \
 	apt install -y mysql-client libmysqlclient-dev && \
 	apt autoremove -y && apt clean -y
 
-RUN apt install -y autoconf autotools-dev gcc make git libltdl-dev
+RUN apt install -y autoconf autotools-dev gcc make git libltdl-dev curl
 
-RUN chmod -R 777 /var/lib/mysql && \
-	chmod 777 /var/log/ && \
-	mkdir -p /repo && \
+RUN mkdir -p /repo && \
 	chmod -R 777 /repo && \
 	mkdir -p /usr/local/ophidia && \
 	mkdir -p /usr/local/ophidia/extra && \
 	useradd -r ophidia -d /usr/local/ophidia && \
-	usermod -u 1000 ophidia && \
-	groupmod -g 1000 ophidia && \
+	usermod -u 2000 ophidia && \
+	groupmod -g 2000 ophidia && \
 	chown -R ophidia:ophidia /usr/local/ophidia
 
 ADD server_scripts/oph_submit.sh /offline_ophidia/
 
-USER mysql
-
-RUN mysqld --initialize-insecure && \
-	mysqld & &> /dev/null ;\
-	while [ ! -S /var/lib/mysql/mysql.sock ]; do sleep 1; done && \
+RUN	service mysql start && \
+	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
 	mysqladmin -u root password abcd && \
 	MYSQL_PWD="abcd" mysql -u root -e "SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));" && \
 	MYSQL_PWD="abcd" mysql -u root -e "CREATE DATABASE ophidiadb;" && \
 	MYSQL_PWD="abcd" mysql -u root -e "CREATE DATABASE oph_dimensions;" && \
 	cd /repo && \
-	curl -s -O -k https://raw.githubusercontent.com/OphidiaBigData/ophidia-analytics-framework/master/etc/ophidiadb.sql && \
+	curl -s -O -k https://raw.githubusercontent.com/OphidiaBigData/ophidia-analytics-framework/$branch_analytics_framework/etc/ophidiadb.sql && \
 	MYSQL_PWD="abcd" mysql -u root ophidiadb < /repo/ophidiadb.sql && \
 	rm -rf /repo/*
 
-USER root
-
 #LIBMATHEVAL
-RUN apt install -y guile-2.0-dev libfl-dev flex bison libmatheval-dev libmatheval1 openssl wget sed gcc make file
+RUN apt install -y libfl-dev flex bison libmatheval-dev libmatheval1 openssl wget sed file && apt autoremove -y && apt clean -y
 
 RUN if [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Primitives" && \
-	apt install -y git gsl-bin libgsl23 libgsl-dev autoconf automake libtool\* zlib zlib-devel && apt autoremove -y && apt clean -y ; fi
+	apt install -y gsl-bin libgslcblas0 libgsl-dev autoconf automake libtool\* && apt autoremove -y && apt clean -y ; fi
 
 USER ophidia
 
@@ -76,7 +64,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 	cd ophidia-primitives && \
 	git checkout $branch_primitives && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-primitives --with-matheval-path=/usr/local/ophidia/extra/lib > /dev/null 2>&1 && \
+	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-primitives --with-matheval-path=/usr/lib/$(uname -m)-linux-gnu > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /usr/local/ophidia/src ; fi
@@ -93,16 +81,12 @@ RUN cp /usr/local/ophidia/oph-cluster/oph-primitives/lib/liboph_*.so /usr/lib/my
 	sed -i '/GRANT/d' /usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql && \
 	apt autoremove -y && apt clean -y
 
-USER mysql
-
-RUN mysqld & &> /dev/null ;\
-	while [ ! -S /var/lib/mysql/mysql.sock ]; do sleep 1; done && \
+RUN service mysql start && \
+	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
 	MYSQL_PWD="abcd" mysql -u root mysql < /usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql && \
 	MYSQL_PWD="abcd" mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'abcd' WITH GRANT OPTION;" && \
 	MYSQL_PWD="abcd" mysql -u root -e "FLUSH PRIVILEGES;" && \
 	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO hostpartition (partitionname) VALUES ('main');"
-
-USER root
 
 #OPHIDIA IO SERVER
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
@@ -168,16 +152,12 @@ RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
 	sed -i "s/127.0.0.1/0.0.0.0/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf && \
 	rm -rf /repo/* ; fi
 
-USER mysql
-
-RUN mysqld & &> /dev/null ;\
-	while [ ! -S /var/lib/mysql/mysql.sock ]; do sleep 1; done && \
+RUN service mysql start && \
+	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
 	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO host (hostname, cores, memory) SELECT '127.0.0.1', 4, 1 FROM DUAL WHERE NOT EXISTS (SELECT hostname FROM host WHERE hostname='127.0.0.1') LIMIT 1;" && \
 	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT IGNORE INTO hashost (idhostpartition, idhost) SELECT 1, host.idhost FROM host WHERE hostname='127.0.0.1';" && \
 	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO dbmsinstance (idhost, login, password, port, ioservertype) SELECT host.idhost, 'root', 'abcd', 65000, 'ophidiaio_memory' FROM host WHERE hostname='127.0.0.1' AND NOT EXISTS (SELECT * FROM dbmsinstance INNER JOIN host ON host.idhost = dbmsinstance.idhost WHERE hostname='127.0.0.1' AND port=65000) LIMIT 1;" && \
 	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "UPDATE host SET status='up' WHERE hostname='127.0.0.1';"
-
-USER root
 
 #OPHIDIA ANALYTICS FRAMEWORK
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
