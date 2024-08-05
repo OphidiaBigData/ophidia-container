@@ -19,7 +19,8 @@ function finalize_deploy()
 		wait
 	elif [[ $CLIENT_SERVICE == "python" ]]
 	then
-		su -c "python" ophidia
+		which python
+		su -c "/usr/local/ophidia/env/bin/python" ophidia
 	fi
 }
 
@@ -56,8 +57,8 @@ while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done
 MYSQL_PWD="abcd" mysql -u root -e "SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));"
 
 HOSTNAME=`hostname -I`
-sed -i "s/#ServerName.*/ServerName ${HOSTNAME}/g" /etc/httpd/conf/httpd.conf
-/usr/sbin/apachectl -DBACKGROUND restart
+echo "ServerName ${HOSTNAME}" >> /etc/apache2/apache2.conf
+service apache2 restart
 sed -i "s/127.0.0.1/${HOSTNAME/' '/}/g" /usr/local/ophidia/oph-server/etc/server.conf
 sed -i "s/127.0.0.1/${HOSTNAME/' '/}/g" /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration
 

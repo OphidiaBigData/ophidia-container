@@ -125,7 +125,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	eval `/usr/bin/modulecmd bash load /etc/modulefiles/mpi/mpich-3.0-x86_64` && \
 	cd /repo && \
 	wget -q https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.1/src/hdf5-1.12.1.tar.gz && \
-        gzip -cd hdf5-1.12.1.tar.gz | tar xf - && \
+	gzip -cd hdf5-1.12.1.tar.gz | tar xf - && \
 	cd hdf5-1.12.1/ && \
 	./configure --prefix=/usr/local/ophidia/extra/hdf5-ts/ --enable-parallel --enable-threadsafe --enable-unsupported --with-zlib > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
@@ -137,10 +137,10 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	yum -y install git && yum -y clean all && \
 	cd /repo && \
 	git clone https://github.com/Unidata/netcdf-c.git && \
-	cd netcdf-c && \
+	cd netcdf-c* && \
 	git checkout tags/v4.4.0 && \
 	eval `/usr/bin/modulecmd bash load /etc/modulefiles/mpi/mpich-3.0-x86_64` && \
-	CC=/usr/lib64/mpich/bin/mpicc CPPFLAGS="-I/usr/local/ophidia/extra/hdf5-ts/include/" LDFLAGS="-L/usr/local/ophidia/extra/hdf5-ts/lib/" LIBS=-ldl H5DIR=/usr/local/ophidia/extra/hdf5-ts/ ./configure --prefix=/usr/local/ophidia/extra/netcdf-ts --enable-netcdf4 --enable-parallel-tests > /dev/null 2>&1 && \
+	CC=/usr/lib64/mpich/bin/mpicc CPPFLAGS="-I/usr/local/ophidia/extra/hdf5-ts/include/" LDFLAGS="-L/usr/local/ophidia/extra/hdf5-ts/lib/" LIBS=-ldl H5DIR=/usr/local/ophidia/extra/hdf5-ts/ ./configure --prefix=/usr/local/ophidia/extra/netcdf-ts --enable-netcdf4 > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* ; fi
@@ -260,7 +260,6 @@ RUN if [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-server/releases/download/v$version/ophidia-server-$version-0.el7.centos.x86_64.rpm && \
 	yum -y install ophidia-server-*.rpm && yum -y clean all && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
-	chown -R ophidia:ophidia /var/www/html/ophidia && \
 	touch /usr/local/ophidia/oph-server/log/server.log && \
 	sed -i "s/OPH_MAX_CORES=.*/OPH_MAX_CORES=0/g" /usr/local/ophidia/oph-server/authz/users/oph-test/user.dat && \
 	sed -i "s/OPH_MAX_CORES=.*/OPH_MAX_CORES=0/g" /usr/local/ophidia/oph-server/authz/users/framework/user.dat && \
@@ -306,9 +305,7 @@ RUN yum -y install httpd mod_ssl php php-mysql php-devel php-gd php-pecl-memcach
 #OPHIDIA TERMINAL
 RUN if [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Terminal" && \
-	yum -y install graphviz\* gtk2\* jansson\* libxml2\* openssl-devel curl libcurl-devel policycoreutils-python readline\* && yum -y clean all && \
-	mkdir -p /var/www/html/ophidia && \
-	chown ophidia:ophidia /var/www/html/ophidia ; fi
+	yum -y install graphviz\* gtk2\* jansson\* libxml2\* openssl-devel curl libcurl-devel policycoreutils-python readline\* && yum -y clean all ; fi
 
 USER ophidia
 
@@ -401,9 +398,9 @@ RUN if [ "$slurm" = "yes" ] ; then rm /usr/local/ophidia/extra/etc/oph_submit.sh
 
 ENV CONDA_DIR=/opt/conda
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
-    rm -r Miniconda3-latest-Linux-x86_64.sh; else echo "Skipping Jupyter step 1 of 3" ; fi
+    wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-$(uname -m).sh -O miniconda.sh && \
+    bash miniconda.sh -b -p /opt/conda && \
+    rm -r miniconda.sh ; fi
 ENV PATH=$CONDA_DIR/bin:$PATH
 
 USER ophidia
@@ -411,7 +408,7 @@ USER ophidia
 ENV PATH=$CONDA_DIR/bin:$PATH
 ADD environment.yml /tmp/environment.yml
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    conda env create -f /tmp/environment.yml -p /usr/local/ophidia/env; else echo "Skipping Jupyter step 2 of 3" ; fi
+    conda env create -f /tmp/environment.yml -p /usr/local/ophidia/env ; fi
 
 USER root
 
@@ -430,7 +427,7 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	touch /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
 	printf "{\n  \"ServerApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
 	chmod 600 /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
-	printf "\nYour jupyter password is:\t\'ophidia\'\n"; else echo "Skipping Jupyter step 3 of 3" ; fi
+	printf "\nYour jupyter password is:\t\'ophidia\'\n" ; fi
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
     mkdir -p /usr/local/ophidia/src && \

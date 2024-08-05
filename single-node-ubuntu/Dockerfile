@@ -2,7 +2,7 @@ FROM ubuntu:24.04
 
 LABEL author="CMCC Foundation" description="Ophidia HPDA Framework"
 
-ARG thread_safe=yes
+ARG thread_safe=no
 ARG jupyter=no
 ARG python=no
 ARG version=1.8.0
@@ -14,6 +14,7 @@ ARG branch_analytics_framework=$branch
 ARG branch_server=$branch
 ARG branch_terminal=$branch
 ARG branch_pyophidia=$branch
+ARG cjose=no
 
 USER root
 
@@ -48,7 +49,7 @@ RUN	service mysql start && \
 	rm -rf /repo/*
 
 #LIBMATHEVAL
-RUN apt install -y libfl-dev flex bison libmatheval-dev libmatheval1 openssl wget sed file && apt autoremove -y && apt clean -y
+RUN apt install -y libfl-dev flex bison libmatheval-dev libmatheval1 openssl wget sed file libmpich-dev && apt autoremove -y && apt clean -y
 
 RUN if [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Primitives" && \
@@ -83,27 +84,20 @@ RUN cp /usr/local/ophidia/oph-cluster/oph-primitives/lib/liboph_*.so /usr/lib/my
 
 RUN service mysql start && \
 	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
+	MYSQL_PWD="abcd" mysql -u root -e "SET GLOBAL log_bin_trust_function_creators = 1;" && \
 	MYSQL_PWD="abcd" mysql -u root mysql < /usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql && \
-	MYSQL_PWD="abcd" mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'abcd' WITH GRANT OPTION;" && \
-	MYSQL_PWD="abcd" mysql -u root -e "FLUSH PRIVILEGES;" && \
 	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO hostpartition (partitionname) VALUES ('main');"
 
 #OPHIDIA IO SERVER
-RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	apt install -y gcc-c++ zlib zlib-devel mpich-3.0.x86_64 mpich-3.0-devel.x86_64 mpich-3.0-autoload.x86_64 && \
-	apt autoremove -y && apt clean -y ; else \
-	apt install -y hdf5-devel hdf5-mpich-devel && \
-	apt install -y netcdf-devel netcdf-mpich-devel && \
-	apt install -y mpich-3.0-autoload.x86_64 && \
+RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
+	apt install -y libhdf5-dev libhdf5-mpich-dev libnetcdf-dev libnetcdf-mpi-dev && \
 	apt autoremove -y && apt clean -y ; fi
 
 #HDF5-MPICH THREAD-SAFE
-ENV MODULEPATH=/usr/share/Modules/modulefiles:/etc/modulefiles
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	eval `/usr/bin/modulecmd bash load /etc/modulefiles/mpi/mpich-3.0-x86_64` && \
 	cd /repo && \
 	wget -q https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.1/src/hdf5-1.12.1.tar.gz && \
-        gzip -cd hdf5-1.12.1.tar.gz | tar xf - && \
+	gzip -cd hdf5-1.12.1.tar.gz | tar xf - && \
 	cd hdf5-1.12.1/ && \
 	./configure --prefix=/usr/local/ophidia/extra/hdf5-ts/ --enable-parallel --enable-threadsafe --enable-unsupported --with-zlib > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
@@ -112,20 +106,21 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 
 #NETCDF-MPICH
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	apt install -y git && apt autoremove -y && apt clean -y && \
+	apt install -y git libcurl4-openssl-dev libxml2 libxml2-dev && apt autoremove -y && apt clean -y && \
 	cd /repo && \
 	git clone https://github.com/Unidata/netcdf-c.git && \
-	cd netcdf-c && \
-	git checkout tags/v4.4.0 && \
-	eval `/usr/bin/modulecmd bash load /etc/modulefiles/mpi/mpich-3.0-x86_64` && \
-	CC=/usr/lib/mpich/bin/mpicc CPPFLAGS="-I/usr/local/ophidia/extra/hdf5-ts/include/" LDFLAGS="-L/usr/local/ophidia/extra/hdf5-ts/lib/" LIBS=-ldl H5DIR=/usr/local/ophidia/extra/hdf5-ts/ ./configure --prefix=/usr/local/ophidia/extra/netcdf-ts --enable-netcdf4 --enable-parallel-tests > /dev/null 2>&1 && \
+	cd netcdf-c* && \
+	git checkout tags/v4.9.2 && \
+	CC=/usr/bin/mpicc CPPFLAGS="-I/usr/local/ophidia/extra/hdf5-ts/include/" LDFLAGS="-L/usr/local/ophidia/extra/hdf5-ts/lib/" LIBS=-ldl H5DIR=/usr/local/ophidia/extra/hdf5-ts/ ./configure --prefix=/usr/local/ophidia/extra/netcdf-ts --enable-netcdf4 --with-plugin-dir=/usr/local/ophidia/extra/netcdf-ts/lib/plugins && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* ; fi
 
+ENV	HDF5_PLUGIN_PATH=/usr/local/ophidia/extra/netcdf-ts/lib/plugins
+
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia I/O Server" && \
-	apt install -y bison\* flex\* autoconf automake libtool\* && apt autoremove -y && apt clean -y ; fi
+	apt install -y bison flex libfl-dev libbison-dev && apt autoremove -y && apt clean -y ; fi
 
 USER ophidia
 
@@ -162,7 +157,7 @@ RUN service mysql start && \
 #OPHIDIA ANALYTICS FRAMEWORK
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Analytics Framework" && \
-	apt install -y jansson\* libxml2\* openssl-devel gsl gsl-devel libcurl libcurl-devel cfitsio cfitsio-devel && apt autoremove -y && apt clean -y && \
+	apt install -y libjansson-dev libssh2-1-dev libssl-dev gsl-bin libgslcblas0 libgsl-dev libcfitsio-dev && apt autoremove -y && apt clean -y && \
 	mkdir -p /var/www/html/ophidia && \
 	chown ophidia:ophidia /var/www/html/ophidia ; fi
 
@@ -174,10 +169,9 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	git clone https://github.com/OphidiaBigData/ophidia-analytics-framework && \
 	cd ophidia-analytics-framework && \
 	git checkout $branch_analytics_framework && \
-	eval `/usr/bin/modulecmd bash load /etc/modulefiles/mpi/mpich-3.0-x86_64` && \
 	./bootstrap > /dev/null 2>&1 && \
 	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-parallel-netcdf --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ophidiaio-server-path=/usr/local/ophidia/oph-cluster/oph-io-server --enable-cfitsio > /dev/null 2>&1 && \
-	make -s > /dev/null 2>&1 && \
+	make  && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /usr/local/ophidia/src && \
 	mkdir -p /usr/local/ophidia/oph-cluster/oph-analytics-framework/log ; fi
@@ -192,7 +186,7 @@ RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
 	rm -rf /repo/* ; fi
 
 #CJOSE
-RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then apt install -y openssl-devel jansson-devel && apt autoremove -y && apt clean -y ; fi && \
+RUN if [ "$cjose" = "yes" ] ; then \
 	cd /repo && \
 	curl -s -LOJk https://github.com/cisco/cjose/archive/0.4.1.tar.gz && \
 	tar -xzf cjose-0.4.1.tar.gz && \
@@ -200,12 +194,11 @@ RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then apt install -
 	./configure --prefix=/usr/local/ophidia/extra > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
-	rm -rf /repo/*
+	rm -rf /repo/* ; fi
 
 #OPHIDIA SERVER
 RUN if [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Server" && \
-	apt install -y compat-guile18 compat-guile18-devel flex-devel guile-devel guile bison openssl-devel curl libcurl-devel libxml2\* jansson\* libssh2\* && apt autoremove -y && apt clean -y && \
 	mkdir -p /var/www/html/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia ; fi
 
@@ -218,7 +211,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 	cd ophidia-server && \
 	git checkout $branch_server && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=/usr/local/ophidia/oph-server --with-framework-path=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-webaccess --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ws-hostname=localhost --with-matheval-path=/usr/local/ophidia/extra/lib > /dev/null 2>&1 && \
+	./configure --prefix=/usr/local/ophidia/oph-server --with-framework-path=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-webaccess --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ws-hostname=localhost --with-matheval-path=/usr/lib/$(uname -m)-linux-gnu > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	mv authz /usr/local/ophidia/oph-server/ && \
@@ -234,7 +227,6 @@ RUN if [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-server/releases/download/v$version/ophidia-server_$version*.deb && \
 	apt install -y ophidia-server_*.deb && apt autoremove -y && apt clean -y && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
-	chown -R ophidia:ophidia /var/www/html/ophidia && \
 	touch /usr/local/ophidia/oph-server/log/server.log && \
 	sed -i "s/OPH_MAX_CORES=.*/OPH_MAX_CORES=0/g" /usr/local/ophidia/oph-server/authz/users/oph-test/user.dat && \
 	sed -i "s/OPH_MAX_CORES=.*/OPH_MAX_CORES=0/g" /usr/local/ophidia/oph-server/authz/users/framework/user.dat && \
@@ -280,9 +272,7 @@ RUN apt install -y apache2-bin php libapache2-mod-php && \
 #OPHIDIA TERMINAL
 RUN if [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Terminal" && \
-	apt install -y graphviz\* gtk2\* jansson\* libxml2\* openssl-devel curl libcurl-devel policycoreutils-python readline\* && apt autoremove -y && apt clean -y && \
-	mkdir -p /var/www/html/ophidia && \
-	chown ophidia:ophidia /var/www/html/ophidia ; fi
+	apt install -y graphviz-dev libgtk2.0-dev policycoreutils-python-utils libreadline-dev && apt autoremove -y && apt clean -y ; fi
 
 USER ophidia
 
@@ -293,7 +283,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 	cd ophidia-terminal && \
 	git checkout $branch_terminal && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=/usr/local/ophidia/oph-terminal --disable-xml-ssl-check --disable-xml-removal > /dev/null 2>&1 && \
+	./configure --prefix=/usr/local/ophidia/oph-terminal --disable-xml-ssl-check --disable-xml-removal && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /usr/local/ophidia/src ; fi
@@ -331,9 +321,9 @@ COPY server_scripts/oph_submit.sh /usr/local/ophidia/extra/etc/
 
 ENV CONDA_DIR=/opt/conda
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
-    bash Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda && \
-    rm -r Miniconda3-latest-Linux-x86_64.sh; else echo "Skipping Jupyter step 1 of 3" ; fi
+    wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-$(uname -m).sh -O miniconda.sh && \
+    bash miniconda.sh -b -p /opt/conda && \
+    rm -r miniconda.sh ; fi
 ENV PATH=$CONDA_DIR/bin:$PATH
 
 USER ophidia
@@ -341,7 +331,7 @@ USER ophidia
 ENV PATH=$CONDA_DIR/bin:$PATH
 ADD environment.yml /tmp/environment.yml
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    conda env create -f /tmp/environment.yml -p /usr/local/ophidia/env; else echo "Skipping Jupyter step 2 of 3" ; fi
+    conda env create -f /tmp/environment.yml -p /usr/local/ophidia/env ; fi
 
 USER root
 
@@ -360,7 +350,7 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	touch /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
 	printf "{\n  \"ServerApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
 	chmod 600 /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
-	printf "\nYour jupyter password is:\t\'ophidia\'\n"; else echo "Skipping Jupyter step 3 of 3" ; fi
+	printf "\nYour jupyter password is:\t\'ophidia\'\n" ; fi
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
     mkdir -p /usr/local/ophidia/src && \
