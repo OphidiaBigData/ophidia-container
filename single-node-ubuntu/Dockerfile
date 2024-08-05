@@ -369,6 +369,10 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 
 USER root
 
+RUN	service mysql start && \
+	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
+	MYSQL_PWD="abcd" mysql -u root -e "DROP USER 'root'@'localhost'; CREATE USER 'root'@'%' IDENTIFIED BY 'abcd'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+
 COPY ssl-params.conf /etc/apache2/conf-available/
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/oph-server/etc/script/oph_submit.sh
 COPY entrypoint.sh /
