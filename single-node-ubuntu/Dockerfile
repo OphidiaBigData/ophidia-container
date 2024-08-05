@@ -111,7 +111,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	git clone https://github.com/Unidata/netcdf-c.git && \
 	cd netcdf-c* && \
 	git checkout tags/v4.9.2 && \
-	CC=/usr/bin/mpicc CPPFLAGS="-I/usr/local/ophidia/extra/hdf5-ts/include/" LDFLAGS="-L/usr/local/ophidia/extra/hdf5-ts/lib/" LIBS=-ldl H5DIR=/usr/local/ophidia/extra/hdf5-ts/ ./configure --prefix=/usr/local/ophidia/extra/netcdf-ts --enable-netcdf4 --with-plugin-dir=/usr/local/ophidia/extra/netcdf-ts/lib/plugins && \
+	CC=/usr/bin/mpicc CPPFLAGS="-I/usr/local/ophidia/extra/hdf5-ts/include/" LDFLAGS="-L/usr/local/ophidia/extra/hdf5-ts/lib/" LIBS=-ldl H5DIR=/usr/local/ophidia/extra/hdf5-ts/ ./configure --prefix=/usr/local/ophidia/extra/netcdf-ts --enable-netcdf4 --with-plugin-dir=/usr/local/ophidia/extra/netcdf-ts/lib/plugins > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* ; fi
@@ -171,7 +171,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	git checkout $branch_analytics_framework && \
 	./bootstrap > /dev/null 2>&1 && \
 	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-parallel-netcdf --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ophidiaio-server-path=/usr/local/ophidia/oph-cluster/oph-io-server --enable-cfitsio > /dev/null 2>&1 && \
-	make  && \
+	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /usr/local/ophidia/src && \
 	mkdir -p /usr/local/ophidia/oph-cluster/oph-analytics-framework/log ; fi
@@ -233,9 +233,9 @@ RUN if [ "$devel" != "yes" ] ; then \
 	rm -rf /repo/* ; fi
 
 #certificates generation and installation
-RUN openssl req -newkey rsa:1024 \
+RUN openssl req -newkey rsa:2048 \
 	    -passout pass:abcd \
-	    -subj "/" -sha1 \
+	    -subj "/" -sha256 \
 	    -keyout rootkey.pem \
 	    -out rootreq.pem && \
 	openssl x509 -req -in rootreq.pem \
@@ -244,9 +244,9 @@ RUN openssl req -newkey rsa:1024 \
 	    -signkey rootkey.pem \
 	    -out rootcert.pem &&\
 	cat rootcert.pem rootkey.pem  > cacert.pem && \
-	openssl req -newkey rsa:1024 \
+	openssl req -newkey rsa:2048 \
 	    -passout pass:abcd \
-	    -subj "/" -sha1 \
+	    -subj "/" -sha256 \
 	    -keyout serverkey.pem \
 	    -out serverreq.pem && \
 	openssl x509 -req \
@@ -259,7 +259,7 @@ RUN openssl req -newkey rsa:1024 \
 	    -out servercert.pem && \
 	cat servercert.pem serverkey.pem rootcert.pem > myserver.pem && \
 	mkdir -p /usr/local/ophidia/oph-server/etc/cert && \
-	cp cacert.pem myserver.pem  /usr/local/ophidia/oph-server/etc/cert && \
+	cp cacert.pem myserver.pem /usr/local/ophidia/oph-server/etc/cert && \
 	rm cacert.pem myserver.pem
 
 #WEB SERVER
@@ -267,7 +267,10 @@ RUN apt install -y apache2-bin php libapache2-mod-php && \
 	apt autoremove -y && apt clean -y && \
 	mkdir -p /etc/httpd/conf/ssl && \
 	cd /etc/httpd/conf/ssl && \
-	openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -out server.crt -keyout server.key -subj "/"
+	openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -out server.crt -keyout server.key -subj "/" && \
+	cp -f server.crt /etc/ssl/certs/ssl-cert-snakeoil.pem && \
+	cp -f server.key /etc/ssl/private/ssl-cert-snakeoil.key && \
+	a2enmod ssl && a2enmod headers && a2ensite default-ssl
 
 #OPHIDIA TERMINAL
 RUN if [ "$devel" = "yes" ] ; then \
@@ -283,7 +286,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 	cd ophidia-terminal && \
 	git checkout $branch_terminal && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=/usr/local/ophidia/oph-terminal --disable-xml-ssl-check --disable-xml-removal && \
+	./configure --prefix=/usr/local/ophidia/oph-terminal --disable-xml-ssl-check --disable-xml-removal > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /usr/local/ophidia/src ; fi
@@ -366,6 +369,7 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 
 USER root
 
+COPY ssl-params.conf /etc/apache2/conf-available/
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/oph-server/etc/script/oph_submit.sh
 COPY entrypoint.sh /
 
