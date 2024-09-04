@@ -382,7 +382,7 @@ RUN if [ "$slurm" = "yes" ] ; then \
 
 USER root
 
-ENV PATH="/usr/local/ophidia/extra/bin:$PATH"
+ENV PATH=/usr/local/ophidia/extra/bin:$PATH
 RUN if [ "$slurm" = "yes" ] ; then \
 	ldconfig -n /usr/local/ophidia/extra/lib/ && \
 	mkdir -p /var/log/slurm && chown ophidia:ophidia /var/log/slurm && \

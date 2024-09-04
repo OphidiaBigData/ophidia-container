@@ -319,7 +319,7 @@ ENV OPH_TERM_FORMAT=extended_compact
 
 USER root
 
-ENV PATH="/usr/local/ophidia/extra/bin:$PATH"
+ENV PATH=/usr/local/ophidia/extra/bin:$PATH
 
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/extra/etc/
 
@@ -343,13 +343,17 @@ RUN rm -r /tmp/environment.yml
 
 USER ophidia
 
-RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    echo "source activate /usr/local/ophidia/env" >> ~/.bashrc; fi
-
 ENV PATH=/usr/local/ophidia/env/bin:$PATH:/usr/local/ophidia/proj/bin:/usr/local/ophidia/.local/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ophidia/proj/lib:/usr/local/ophidia/.local/lib
 
+RUN echo "export PATH=$PATH" >> ~/.bashrc && \
+	echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> ~/.bashrc
+
+RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+	echo "source activate /usr/local/ophidia/env" >> ~/.bashrc ; fi
+
 RUN if [ "$jupyter" = "yes" ] ; then \
+	pip install jupyterlab && \
 	mkdir -p /usr/local/ophidia/.jupyter/ && \
 	touch /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
 	printf "{\n  \"ServerApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_server_config.json && \

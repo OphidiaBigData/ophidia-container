@@ -15,8 +15,7 @@ function finalize_deploy()
 		su -c "/usr/local/ophidia/oph-terminal/bin/oph_term -H $_SERVER_HOST -P $_SERVER_PORT -u $_USER -p $_PASSWD" ophidia
 	elif [[ $CLIENT_SERVICE == "jupyter" ]]
 	then
-		su -c "jupyter-lab --no-browser --notebook-dir=/usr/local/ophidia --port=$JUPYTER_PORT --ip=$HOSTNAME &" ophidia
-		wait
+		su -c ". ~/.bashrc; jupyter-lab --no-browser --notebook-dir=/usr/local/ophidia --port=$JUPYTER_PORT --ip=$HOSTNAME" -s /bin/bash ophidia
 	elif [[ $CLIENT_SERVICE == "python" ]]
 	then
 		su -c "/usr/local/ophidia/env/bin/python" ophidia
