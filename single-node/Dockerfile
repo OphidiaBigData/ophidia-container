@@ -15,6 +15,7 @@ ARG branch_analytics_framework=$branch
 ARG branch_server=$branch
 ARG branch_terminal=$branch
 ARG branch_pyophidia=$branch
+ARG valgrind=no
 
 USER root
 
@@ -60,7 +61,7 @@ RUN mysqld --initialize-insecure && \
 USER root
 
 #LIBMATHEVAL
-RUN yum -y install compat-guile18 compat-guile18-devel flex flex-devel guile-devel guile bison openssl wget sed gcc make file && \
+RUN yum -y install compat-guile18 compat-guile18-devel flex flex-devel guile-devel guile bison openssl wget sed gcc make file && yum -y clean all && \
 	cd /repo && \
 	curl -s -O http://ftp.gnu.org/gnu/libmatheval/libmatheval-1.1.11.tar.gz && \
 	tar -xzf libmatheval-1.1.11.tar.gz && \
@@ -92,7 +93,7 @@ USER root
 
 RUN if [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v$version/ophidia-primitives-$version-0.el7.centos.x86_64.rpm && \
-	yum -y install ophidia-primitives-*.rpm && \
+	yum -y install ophidia-primitives-*.rpm && yum -y clean all && \
 	rm -rf /repo/* ; fi
 
 RUN cp /usr/local/ophidia/oph-cluster/oph-primitives/lib/liboph_*.so /usr/lib64/mysql/plugin && \
@@ -296,8 +297,7 @@ RUN openssl req -newkey rsa:1024 \
 	rm cacert.pem myserver.pem
 
 #WEB SERVER
-RUN yum -y install httpd mod_ssl php php-mysql php-devel php-gd php-pecl-memcache php-pspell php-snmp php-xmlrpc php-xml && \
-	yum -y clean all && \
+RUN yum -y install httpd mod_ssl php php-mysql php-devel php-gd php-pecl-memcache php-pspell php-snmp php-xmlrpc php-xml && yum -y clean all && \
 	mkdir -p /etc/httpd/conf/ssl && \
 	cd /etc/httpd/conf/ssl && \
 	openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -out server.crt -keyout server.key -subj "/"
@@ -350,8 +350,7 @@ RUN if [ "$slurm" = "no" ] ; then echo "No internal resource manager" ; else ech
 #SHELL ["/bin/bash", "-c"]
 
 RUN if [ "$slurm" = "yes" ] ; then \
-	yum -y install munge munge-devel munge-libs && \
-	yum -y clean all && \
+	yum -y install munge munge-devel munge-libs && yum -y clean all && \
 	dd if=/dev/urandom bs=1 count=1024 > /etc/munge/munge.key && \
 	chmod 400 /etc/munge/munge.key && \
 	mkdir -p /var/run/munge && chmod 755 /var/run/munge && \
@@ -366,8 +365,7 @@ RUN if [ "$slurm" = "yes" ] ; then \
 
 RUN if [ "$slurm" = "yes" ] ; then \
 	yum -y install sudo bzip2 slurm python3 openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel man2html libibmad libibumad && \
-	yum -y remove slurm && \
-	yum -y clean all && \
+	yum -y remove slurm && yum -y clean all && \
 	mkdir -p /repo && cd /repo && \
 	curl -k -O https://download.schedmd.com/slurm/slurm-20.11.7.tar.bz2 && \
 	mkdir -p /usr/local/ophidia/extra/etc && \
@@ -422,7 +420,7 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 ENV PATH=/usr/local/ophidia/env/bin:$PATH:/usr/local/ophidia/proj/bin:/usr/local/ophidia/.local/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ophidia/proj/lib:/usr/local/ophidia/.local/lib
 
-RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+RUN if [ "$jupyter" = "yes" ] ; then \
 	mkdir -p /usr/local/ophidia/.jupyter/ && \
 	touch /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
 	printf "{\n  \"ServerApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
@@ -442,6 +440,9 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
     conda clean -y --all; fi
 
 USER root
+
+RUN	if [ "$valgrind" = "yes" ] ; then \
+	yum -y install valgrind && yum -y clean all; fi
 
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/oph-server/etc/script/oph_submit.sh
 COPY entrypoint.sh /

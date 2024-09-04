@@ -15,6 +15,7 @@ ARG branch_server=$branch
 ARG branch_terminal=$branch
 ARG branch_pyophidia=$branch
 ARG cjose=no
+ARG valgrind=no
 
 USER root
 
@@ -24,7 +25,7 @@ RUN cd / && \
 	apt install -y mysql-client libmysqlclient-dev && \
 	apt autoremove -y && apt clean -y
 
-RUN apt install -y autoconf autotools-dev gcc make git libltdl-dev curl
+RUN apt install -y autoconf autotools-dev gcc make git libltdl-dev curl && apt autoremove -y && apt clean -y
 
 RUN mkdir -p /repo && \
 	chmod -R 777 /repo && \
@@ -74,7 +75,7 @@ USER root
 
 RUN if [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v$version/ophidia-primitives_$version*.deb && \
-	apt install -y ophidia-primitives_*.deb && \
+	apt install -y ophidia-primitives_*.deb && apt autoremove -y && apt clean -y &&\
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	rm -rf /repo/* ; fi
 
@@ -348,7 +349,7 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 ENV PATH=/usr/local/ophidia/env/bin:$PATH:/usr/local/ophidia/proj/bin:/usr/local/ophidia/.local/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ophidia/proj/lib:/usr/local/ophidia/.local/lib
 
-RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+RUN if [ "$jupyter" = "yes" ] ; then \
 	mkdir -p /usr/local/ophidia/.jupyter/ && \
 	touch /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
 	printf "{\n  \"ServerApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
@@ -372,6 +373,10 @@ USER root
 RUN	service mysql start && \
 	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
 	MYSQL_PWD="abcd" mysql -u root -e "DROP USER 'root'@'localhost'; CREATE USER 'root'@'%' IDENTIFIED BY 'abcd'; GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION; FLUSH PRIVILEGES;"
+
+RUN	if [ "$valgrind" = "yes" ] ; then \
+	apt install -y valgrind && \
+	apt autoremove -y && apt clean -y ; fi
 
 COPY ssl-params.conf /etc/apache2/conf-available/
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/oph-server/etc/script/oph_submit.sh

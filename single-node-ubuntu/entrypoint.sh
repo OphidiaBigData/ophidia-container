@@ -19,7 +19,6 @@ function finalize_deploy()
 		wait
 	elif [[ $CLIENT_SERVICE == "python" ]]
 	then
-		which python
 		su -c "/usr/local/ophidia/env/bin/python" ophidia
 	fi
 }
