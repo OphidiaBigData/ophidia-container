@@ -326,6 +326,9 @@ ENV PATH=/usr/local/ophidia/extra/bin:$PATH
 
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/extra/etc/
 
+RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+    apt install -y graphviz && apt autoremove -y && apt clean -y ; fi
+
 ENV CONDA_DIR=/opt/conda
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
     wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-$(uname -m).sh -O miniconda.sh && \
