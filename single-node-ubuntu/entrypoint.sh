@@ -34,8 +34,12 @@ else
 	CLIENT_SERVICE=${DEPLOY:-'terminal'}
 fi
 
-OPH_COMPONENT_MEM_LIMIT="$((${MEMORY:-2048}/2))"
 [ -z "$DEBUG" ] && DEBUG="" || DEBUG="-d"
+[ -z "$IODEBUG" ] && IODEBUG="" || IODEBUG="-D"
+
+[ -z "$NOMEMCHECK" ] && NOMEMCHECK="" || NOMEMCHECK="-m"
+
+OPH_COMPONENT_MEM_LIMIT="$((${MEMORY:-2048}/2))"
 if [ $CLIENT_SERVICE == "terminal_only" ]
 then
 	_SERVER_HOST=${OPH_SERVER_HOST:-'172.17.0.3'}
@@ -82,7 +86,7 @@ fi
 sed -i "s/MEMORY_BUFFER=.*/MEMORY_BUFFER=${OPH_COMPONENT_MEM_LIMIT}/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf
 sed -i "s/MEMORY=.*/MEMORY=${OPH_COMPONENT_MEM_LIMIT}/g" /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration
 
-/usr/local/ophidia/oph-cluster/oph-io-server/bin/oph_io_server $DEBUG -i 1 > /dev/null 2>&1 &
+/usr/local/ophidia/oph-cluster/oph-io-server/bin/oph_io_server $IODEBUG $NOMEMCHECK -i 1 > /dev/null 2>&1 &
 /usr/local/ophidia/oph-server/bin/oph_server $DEBUG &>/dev/null &
 sleep 1
 EOF

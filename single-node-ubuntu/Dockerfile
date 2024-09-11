@@ -15,7 +15,9 @@ ARG branch_server=$branch
 ARG branch_terminal=$branch
 ARG branch_pyophidia=$branch
 ARG cjose=no
+ARG zarr=no
 ARG valgrind=no
+ARG debug_level=0
 
 USER root
 
@@ -171,7 +173,8 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	cd ophidia-analytics-framework && \
 	git checkout $branch_analytics_framework && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-parallel-netcdf --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ophidiaio-server-path=/usr/local/ophidia/oph-cluster/oph-io-server --enable-cfitsio > /dev/null 2>&1 && \
+	if [ "$zarr" = "yes" ] ; then enable_zarr = "--enable-zarr" ; fi && \
+	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-parallel-netcdf --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ophidiaio-server-path=/usr/local/ophidia/oph-cluster/oph-io-server --enable-cfitsio --with-debug-level=$debug_level $enable_zarr > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /usr/local/ophidia/src && \
