@@ -5,7 +5,7 @@ LABEL author="CMCC Foundation" description="Ophidia HPDA Framework"
 ARG thread_safe=no
 ARG jupyter=no
 ARG python=no
-ARG mainpartition=yes
+ARG main_partition=yes
 ARG ioservers=0
 ARG version=1.8.0
 ARG devel=no
@@ -27,7 +27,8 @@ RUN cd / && \
 	apt update -y && \
 	apt install -y mysql-server && \
 	apt install -y mysql-client libmysqlclient-dev && \
-	apt autoremove -y && apt clean -y
+	apt autoremove -y && apt clean -y && \
+	chmod +x /var/run/mysqld
 
 RUN apt install -y autoconf autotools-dev gcc make git libltdl-dev curl && apt autoremove -y && apt clean -y
 
@@ -151,7 +152,7 @@ RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
 	sed -i "s/127.0.0.1/0.0.0.0/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf && \
 	rm -rf /repo/* ; fi
 
-RUN if [ "$mainpartition" = "yes" ] ; then \
+RUN if [ "$main_partition" = "yes" ] ; then \
 	service mysql start && while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
 	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO host (hostname, cores, memory, status) SELECT '127.0.0.1', 4, 1, 'up' FROM DUAL WHERE NOT EXISTS (SELECT hostname FROM host WHERE hostname = '127.0.0.1') LIMIT 1;" && \
 	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO dbmsinstance (idhost, login, password, port, ioservertype) SELECT host.idhost, 'root', 'abcd', 65000, 'ophidiaio_memory' FROM host WHERE hostname = '127.0.0.1' AND NOT EXISTS (SELECT * FROM dbmsinstance INNER JOIN host ON host.idhost = dbmsinstance.idhost WHERE hostname = '127.0.0.1' AND port = 65000) LIMIT 1;" && \
@@ -413,6 +414,6 @@ EXPOSE 65000
 
 ENV JUPYTER=$jupyter
 ENV PYTHON=$python
-ENV MAINPARTITION=$mainpartition
+ENV MAIN_PARTITION=$main_partition
 
 ENTRYPOINT ["/entrypoint.sh"]

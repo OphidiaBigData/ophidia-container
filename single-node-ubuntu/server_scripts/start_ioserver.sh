@@ -28,6 +28,7 @@ IO_SERVER_PATH=${OPH_IOSERVER_LOCATION}/bin/oph_io_server
 OPH_SERVER_LOCATION=/usr/local/ophidia/oph-server
 IO_SERVER_TEMPLATE=${OPH_SERVER_LOCATION}/etc/script/oph_ioserver.conf.template
 SCRIPT_DIR=/usr/local/ophidia/.ophidia
+NO_MEMORY_CHECK=$(cat /usr/local/ophidia/oph-cluster/oph-io-server/etc/memory_check)
 
 # Body
 myhost="127.0.${myid}.1"
@@ -49,7 +50,7 @@ sed -i "s|\$ID|${myid}|g" ${SCRIPT_DIR}/data${myid}/oph_ioserver.conf
 sed -i "s|\$PORT|${port}|g" ${SCRIPT_DIR}/data${myid}/oph_ioserver.conf
 
 echo "Starting I/O server ${myid}"
-${IO_SERVER_PATH} -i ${myid} -c ${SCRIPT_DIR}/data${myid}/oph_ioserver.conf > ${SCRIPT_DIR}/data${myid}/log/server.log 2>&1 < /dev/null
+${IO_SERVER_PATH} ${NO_MEMORY_CHECK} -i ${myid} -c ${SCRIPT_DIR}/data${myid}/oph_ioserver.conf >${SCRIPT_DIR}/data${myid}/log/server.log 2>&1 </dev/null
 echo "Exit from IO server ${myid}"
 
 echo "Remove host ${myhost} from partition ${hpid}"

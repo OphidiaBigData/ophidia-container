@@ -40,6 +40,8 @@ STOP_SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.finalize.sh
 # Body
 mkdir -p ${SCRIPT_DIR}
 
+> ${log}
+
 for myid in {1..$nhosts}
 do
 	> ${START_SCRIPT_FILE}
@@ -47,7 +49,7 @@ do
 	echo "${IO_SERVER_LAUNCHER} ${hostpartition} ${myid}" >> ${START_SCRIPT_FILE}
 	chmod +x ${START_SCRIPT_FILE}
 
-	${START_SCRIPT_FILE} >> ${log} 2>>&1 < /dev/null &
+	${START_SCRIPT_FILE} >>${log} 2>>${log} </dev/null &
 done
 
 wait $(jobs -p)
@@ -59,7 +61,7 @@ do
 	echo "${IO_SERVER_FLUSHER} ${hostpartition} ${myid}" >> ${STOP_SCRIPT_FILE}
 	chmod +x ${STOP_SCRIPT_FILE}
 
-	${STOP_SCRIPT_FILE} >> ${log} 2>>&1 < /dev/null
+	${STOP_SCRIPT_FILE} >>${log} 2>>${log} </dev/null
 done
 
 rm -f ${START_SCRIPT_FILE}

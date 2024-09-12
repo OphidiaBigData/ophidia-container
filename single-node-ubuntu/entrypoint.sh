@@ -24,7 +24,7 @@ function finalize_deploy()
 
 trap finalize_deploy EXIT
 
-if [ $JUPYTER == "yes" ]
+if [ ${JUPYTER} == "yes" ]
 then
 	CLIENT_SERVICE=${DEPLOY:-'jupyter'}
 elif [ $PYTHON == "yes" ]
@@ -34,20 +34,21 @@ else
 	CLIENT_SERVICE=${DEPLOY:-'terminal'}
 fi
 
-[ -z "$DEBUG" ] && DEBUG="" || DEBUG="-d"
-[ -z "$IODEBUG" ] && IODEBUG="" || IODEBUG="-D"
+[ -z "${DEBUG}" ] && DEBUG="" || DEBUG="-d"
+[ -z "${IO_DEBUG}" ] && IO_DEBUG="" || IO_DEBUG="-D"
 
-[ -z "$NOMEMCHECK" ] && NOMEMCHECK="" || NOMEMCHECK="-m"
+[ -z "${NO_MEMORY_CHECK}" ] && NO_MEMORY_CHECK="" || NO_MEMORY_CHECK="-m"
+echo "${NO_MEMORY_CHECK}" > /usr/local/ophidia/oph-cluster/oph-io-server/etc/memory_check
 
 OPH_COMPONENT_MEM_LIMIT="$((${MEMORY:-2048}/2))"
-if [ $CLIENT_SERVICE == "terminal_only" ]
+if [ ${CLIENT_SERVICE} == "terminal_only" ]
 then
 	_SERVER_HOST=${OPH_SERVER_HOST:-'172.17.0.3'}
 	_SERVER_PORT=${OPH_SERVER_PORT:-'11732'}
 	_USER=${OPH_USER:-'oph-test'}
 	_PASSWD=${OPH_PASSWD:-'abcd'}
 	exit
-elif [ $CLIENT_SERVICE == "jupyter" ]
+elif [ ${CLIENT_SERVICE} == "jupyter" ]
 then
 	JUPYTER_PORT=${UI_PORT:=8888}
 fi
@@ -64,7 +65,7 @@ service apache2 restart
 sed -i "s/\/127.0.0.1/\/${HOSTNAME/' '/}/g" /usr/local/ophidia/oph-server/etc/server.conf
 sed -i "s/\/127.0.0.1/\/${HOSTNAME/' '/}/g" /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration
 
-if $SLURM_BUILD ; then
+if ${SLURM_BUILD} ; then
 	echo "127.0.0.1 localhost localhost.localdomain" >> /etc/hosts
 	chmod go-w /var/log/
 	sudo -u munge /usr/sbin/munged >/dev/null
@@ -74,7 +75,7 @@ if $SLURM_BUILD ; then
 fi
 
 su - ophidia <<EOF
-if $SLURM_BUILD ; then
+if ${SLURM_BUILD} ; then
 	sed -i "s/ControlAddr=.*/ControlAddr=${HOSTNAME}/g" /usr/local/ophidia/extra/etc/slurm.conf
 	sed -i "s/CPUs=.*/CPUs=$(grep processor /proc/cpuinfo | wc -l)/g" /usr/local/ophidia/extra/etc/slurm.conf
 	sed -i '/mpiexec.hydra /s/^/#/' /usr/local/ophidia/oph-server/etc/script/oph_submit.sh
@@ -86,11 +87,11 @@ fi
 sed -i "s/MEMORY_BUFFER=.*/MEMORY_BUFFER=${OPH_COMPONENT_MEM_LIMIT}/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf
 sed -i "s/MEMORY=.*/MEMORY=${OPH_COMPONENT_MEM_LIMIT}/g" /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration
 
-if [ "$MAINPARTITION" = "yes" ] ; then
-	/usr/local/ophidia/oph-cluster/oph-io-server/bin/oph_io_server $IODEBUG $NOMEMCHECK -i 1 > /dev/null 2>&1 &
+if [ "${MAIN_PARTITION}" = "yes" ] ; then
+	/usr/local/ophidia/oph-cluster/oph-io-server/bin/oph_io_server ${IO_DEBUG} ${NO_MEMORY_CHECK} -i 1 >/dev/null 2>&1 </dev/null &
 fi
 
-/usr/local/ophidia/oph-server/bin/oph_server $DEBUG &>/dev/null &
+/usr/local/ophidia/oph-server/bin/oph_server ${DEBUG} >/dev/null 2>&1 </dev/null &
 
 sleep 1
 EOF
