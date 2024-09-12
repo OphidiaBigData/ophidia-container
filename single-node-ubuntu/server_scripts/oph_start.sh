@@ -42,26 +42,24 @@ mkdir -p ${SCRIPT_DIR}
 
 for myid in {1..$nhosts}
 do
-
 	> ${START_SCRIPT_FILE}
 	echo "#!/bin/bash" >> ${START_SCRIPT_FILE}
 	echo "${IO_SERVER_LAUNCHER} ${hostpartition} ${myid}" >> ${START_SCRIPT_FILE}
 	chmod +x ${START_SCRIPT_FILE}
 
-	${START_SCRIPT_FILE} >> ${log} 2>>&1 < /dev/null
-
+	${START_SCRIPT_FILE} >> ${log} 2>>&1 < /dev/null &
 done
+
+wait $(jobs -p)
 
 for i in {1..$nhosts}
 do
-
 	> ${STOP_SCRIPT_FILE}
 	echo "#!/bin/bash" >> ${STOP_SCRIPT_FILE}
 	echo "${IO_SERVER_FLUSHER} ${hostpartition} ${myid}" >> ${STOP_SCRIPT_FILE}
 	chmod +x ${STOP_SCRIPT_FILE}
 
 	${STOP_SCRIPT_FILE} >> ${log} 2>>&1 < /dev/null
-
 done
 
 rm -f ${START_SCRIPT_FILE}
