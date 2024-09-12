@@ -405,6 +405,8 @@ COPY server_scripts/stop_ioserver.sh /usr/local/ophidia/oph-server/etc/script/st
 COPY server_scripts/oph_ioserver.conf.template /usr/local/ophidia/oph-server/etc/script/oph_ioserver.conf.template
 COPY entrypoint.sh /
 
+RUN	echo "ENABLE_CLUSTER_DEPLOYMENT=yes\nENABLE_CLUSTER_INCREASE=yes" >> /usr/local/ophidia/oph-server/etc/server.conf
+
 EXPOSE 11732
 EXPOSE 8888
 EXPOSE 65000

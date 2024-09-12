@@ -37,7 +37,6 @@ fi
 echo "OphidiaDB updated"
 
 rm -rf ${SCRIPT_DIR}/data${myid}/*
-rm -rf ${SCRIPT_DIR}/host/${myid}.address
 
 exit 0
 
