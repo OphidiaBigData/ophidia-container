@@ -5,6 +5,8 @@ LABEL author="CMCC Foundation" description="Ophidia HPDA Framework"
 ARG thread_safe=no
 ARG jupyter=no
 ARG python=no
+ARG mainpartition=yes
+ARG ioservers=0
 ARG version=1.8.0
 ARG devel=no
 ARG branch=master
@@ -88,8 +90,7 @@ RUN cp /usr/local/ophidia/oph-cluster/oph-primitives/lib/liboph_*.so /usr/lib/my
 RUN service mysql start && \
 	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
 	MYSQL_PWD="abcd" mysql -u root -e "SET GLOBAL log_bin_trust_function_creators = 1;" && \
-	MYSQL_PWD="abcd" mysql -u root mysql < /usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql && \
-	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO hostpartition (partitionname) VALUES ('main');"
+	MYSQL_PWD="abcd" mysql -u root mysql < /usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql
 
 #OPHIDIA IO SERVER
 RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
@@ -150,12 +151,19 @@ RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
 	sed -i "s/127.0.0.1/0.0.0.0/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf && \
 	rm -rf /repo/* ; fi
 
-RUN service mysql start && \
-	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
-	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO host (hostname, cores, memory) SELECT '127.0.0.1', 4, 1 FROM DUAL WHERE NOT EXISTS (SELECT hostname FROM host WHERE hostname='127.0.0.1') LIMIT 1;" && \
-	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT IGNORE INTO hashost (idhostpartition, idhost) SELECT 1, host.idhost FROM host WHERE hostname='127.0.0.1';" && \
-	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO dbmsinstance (idhost, login, password, port, ioservertype) SELECT host.idhost, 'root', 'abcd', 65000, 'ophidiaio_memory' FROM host WHERE hostname='127.0.0.1' AND NOT EXISTS (SELECT * FROM dbmsinstance INNER JOIN host ON host.idhost = dbmsinstance.idhost WHERE hostname='127.0.0.1' AND port=65000) LIMIT 1;" && \
-	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "UPDATE host SET status='up' WHERE hostname='127.0.0.1';"
+RUN if [ "$mainpartition" = "yes" ] ; then \
+	service mysql start && while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
+	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO host (hostname, cores, memory, status) SELECT '127.0.0.1', 4, 1, 'up' FROM DUAL WHERE NOT EXISTS (SELECT hostname FROM host WHERE hostname = '127.0.0.1') LIMIT 1;" && \
+	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO dbmsinstance (idhost, login, password, port, ioservertype) SELECT host.idhost, 'root', 'abcd', 65000, 'ophidiaio_memory' FROM host WHERE hostname = '127.0.0.1' AND NOT EXISTS (SELECT * FROM dbmsinstance INNER JOIN host ON host.idhost = dbmsinstance.idhost WHERE hostname = '127.0.0.1' AND port = 65000) LIMIT 1;" && \
+	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO hostpartition (partitionname) VALUES ('main');" && \
+	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT IGNORE INTO hashost (idhostpartition, idhost) SELECT 1, host.idhost FROM host WHERE hostname='127.0.0.1';" ; fi
+
+RUN if [ $ioservers -gt 0 ] ; then \
+	service mysql start && while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
+	for i in $(seq 1 $ioservers) ; do \
+	port=$((65000 + i)) && \
+	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO host (hostname, cores, memory, status) SELECT '127.0.$i.1', 4, 1, 'down' FROM DUAL WHERE NOT EXISTS (SELECT hostname FROM host WHERE hostname='127.0.$i.1') LIMIT 1;" && \
+	MYSQL_PWD="abcd" mysql -u root ophidiadb -e "INSERT INTO dbmsinstance (idhost, login, password, port, ioservertype) SELECT host.idhost, 'root', 'abcd', $port, 'ophidiaio_memory' FROM host WHERE hostname = '127.0.$i.1' AND NOT EXISTS (SELECT * FROM dbmsinstance INNER JOIN host ON host.idhost = dbmsinstance.idhost WHERE hostname = '127.0.$i.1' AND port = $port) LIMIT 1;" ; done ; fi
 
 #OPHIDIA ANALYTICS FRAMEWORK
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
@@ -390,6 +398,11 @@ RUN	if [ "$valgrind" = "yes" ] ; then \
 
 COPY ssl-params.conf /etc/apache2/conf-available/
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/oph-server/etc/script/oph_submit.sh
+COPY server_scripts/oph_cancel.sh /usr/local/ophidia/oph-server/etc/script/oph_cancel.sh
+COPY server_scripts/oph_start.sh /usr/local/ophidia/oph-server/etc/script/oph_start.sh
+COPY server_scripts/start_ioserver.sh /usr/local/ophidia/oph-server/etc/script/start_ioserver.sh
+COPY server_scripts/stop_ioserver.sh /usr/local/ophidia/oph-server/etc/script/stop_ioserver.sh
+COPY server_scripts/oph_ioserver.conf.template /usr/local/ophidia/oph-server/etc/script/oph_ioserver.conf.template
 COPY entrypoint.sh /
 
 EXPOSE 11732
@@ -398,5 +411,6 @@ EXPOSE 65000
 
 ENV JUPYTER=$jupyter
 ENV PYTHON=$python
+ENV MAINPARTITION=$mainpartition
 
 ENTRYPOINT ["/entrypoint.sh"]

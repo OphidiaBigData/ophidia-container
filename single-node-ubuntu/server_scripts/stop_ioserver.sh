@@ -1,6 +1,6 @@
 #
 #    Ophidia Server
-#    Copyright (C) 2012-2021 CMCC Foundation
+#    Copyright (C) 2012-2023 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -19,37 +19,25 @@
 #!/bin/bash
 
 # Input parameters
-taskid=${1}
-ncores=${2}
-log=${3}
-submissionstring=${4}
-queue=${5}
-serverid=${6}
-workflowid=${7}
-project=${8}
+hpid=${1}
+myid=${2}
 
 # Const
-FRAMEWORK_PATH=/usr/local/ophidia/oph-cluster/oph-analytics-framework
 SCRIPT_DIR=/usr/local/ophidia/.ophidia
-SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.submit.sh
 
 # Body
-mkdir -p ${HOME}/.ophidia
+myhost="127.0.${myid}.1"
 
-> ${SCRIPT_FILE}
-echo "#!/bin/bash" >> ${SCRIPT_FILE}
-echo "${FRAMEWORK_PATH}/bin/oph_analytics_framework \"${submissionstring}\"" >> ${SCRIPT_FILE}
-chmod +x ${SCRIPT_FILE}
-
-mpiexec.hydra -n ${ncores} -outfile-pattern ${log} -errfile-pattern ${log} ${SCRIPT_FILE}
-
+echo "Remove host ${myhost} from partition ${hpid} (inserted by job ${myid})"
+MYSQL_PWD="abcd" mysql -u root ophidiadb -e "START TRANSACTION; UPDATE host SET status = 'down', importcount = 0 WHERE hostname='${myhost}'; DELETE FROM hashost WHERE idhostpartition = ${hpid} AND idhost IN (SELECT idhost FROM host WHERE hostname = '${myhost}'); COMMIT;"
 if [ $? -ne 0 ]; then
-	echo "Unable to submit ${SCRIPT_FILE}"
-	rm -f ${SCRIPT_FILE}
+	echo "Query failed"
 	exit 1
 fi
+echo "OphidiaDB updated"
 
-rm -f ${SCRIPT_FILE}
+rm -rf ${SCRIPT_DIR}/data${myid}/*
+rm -rf ${SCRIPT_DIR}/host/${myid}.address
 
 exit 0
 

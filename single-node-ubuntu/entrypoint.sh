@@ -86,8 +86,12 @@ fi
 sed -i "s/MEMORY_BUFFER=.*/MEMORY_BUFFER=${OPH_COMPONENT_MEM_LIMIT}/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf
 sed -i "s/MEMORY=.*/MEMORY=${OPH_COMPONENT_MEM_LIMIT}/g" /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration
 
-/usr/local/ophidia/oph-cluster/oph-io-server/bin/oph_io_server $IODEBUG $NOMEMCHECK -i 1 > /dev/null 2>&1 &
+if [ "$MAINPARTITION" = "yes" ] ; then
+	/usr/local/ophidia/oph-cluster/oph-io-server/bin/oph_io_server $IODEBUG $NOMEMCHECK -i 1 > /dev/null 2>&1 &
+fi
+
 /usr/local/ophidia/oph-server/bin/oph_server $DEBUG &>/dev/null &
+
 sleep 1
 EOF
 
