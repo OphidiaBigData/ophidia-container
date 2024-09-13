@@ -21,6 +21,8 @@
 # Input parameters
 hpid=${1}
 myid=${2}
+taskid=${3}
+serverid=${4}
 
 # Const
 OPH_IOSERVER_LOCATION=/usr/local/ophidia/oph-cluster/oph-io-server
@@ -50,7 +52,7 @@ sed -i "s|\$ID|${myid}|g" ${SCRIPT_DIR}/data${myid}/oph_ioserver.conf
 sed -i "s|\$PORT|${port}|g" ${SCRIPT_DIR}/data${myid}/oph_ioserver.conf
 
 echo "Starting I/O server ${myid}"
-${IO_SERVER_PATH} ${NO_MEMORY_CHECK} -i ${myid} -c ${SCRIPT_DIR}/data${myid}/oph_ioserver.conf >${SCRIPT_DIR}/data${myid}/log/server.log 2>&1 </dev/null
+${IO_SERVER_PATH} ${NO_MEMORY_CHECK} -i ${myid} -c ${SCRIPT_DIR}/data${myid}/oph_ioserver.conf -j ${serverid}${taskid} >${SCRIPT_DIR}/data${myid}/log/server.log 2>&1 </dev/null
 echo "Exit from IO server ${myid}"
 
 echo "Remove host ${myhost} from partition ${hpid}"

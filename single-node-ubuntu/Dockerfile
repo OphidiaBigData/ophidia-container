@@ -401,6 +401,7 @@ COPY ssl-params.conf /etc/apache2/conf-available/
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/oph-server/etc/script/oph_submit.sh
 COPY server_scripts/oph_cancel.sh /usr/local/ophidia/oph-server/etc/script/oph_cancel.sh
 COPY server_scripts/oph_start.sh /usr/local/ophidia/oph-server/etc/script/oph_start.sh
+COPY server_scripts/oph_check.sh /usr/local/ophidia/oph-server/etc/script/oph_check.sh
 COPY server_scripts/start_ioserver.sh /usr/local/ophidia/oph-server/etc/script/start_ioserver.sh
 COPY server_scripts/stop_ioserver.sh /usr/local/ophidia/oph-server/etc/script/stop_ioserver.sh
 COPY server_scripts/oph_ioserver.conf.template /usr/local/ophidia/oph-server/etc/script/oph_ioserver.conf.template

@@ -18,18 +18,7 @@
 
 #!/bin/bash
 
-# Input parameters
-taskid=${1}
-serverid=${2}
-taskname=${3}
-
-# Body
-JOBID="$(ps aux | grep oph_io_server | grep ${serverid}${taskid} | awk '{ print $2 }')"
-if [ "$JOBID" != "" ] ; then
-kill $JOBID
-else
-killall ${serverid}${taskid}.submit.sh
-fi
+echo "task ${1} ophidia"
 
 exit 0
 

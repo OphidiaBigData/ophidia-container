@@ -34,19 +34,19 @@ OPH_SERVER_LOCATION=/usr/local/ophidia/oph-server
 IO_SERVER_LAUNCHER=${OPH_SERVER_LOCATION}/etc/script/start_ioserver.sh
 IO_SERVER_FLUSHER=${OPH_SERVER_LOCATION}/etc/script/stop_ioserver.sh
 SCRIPT_DIR=/usr/local/ophidia/.ophidia
-START_SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.start.sh
-STOP_SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.finalize.sh
+START_SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.submit.sh
+STOP_SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.stop.sh
 
 # Body
 mkdir -p ${SCRIPT_DIR}
 
 > ${log}
 
-for myid in {1..$nhosts}
+for myid in $(seq 1 $nhosts)
 do
 	> ${START_SCRIPT_FILE}
 	echo "#!/bin/bash" >> ${START_SCRIPT_FILE}
-	echo "${IO_SERVER_LAUNCHER} ${hostpartition} ${myid}" >> ${START_SCRIPT_FILE}
+	echo "${IO_SERVER_LAUNCHER} ${hostpartition} ${myid} ${taskid} ${serverid}" >> ${START_SCRIPT_FILE}
 	chmod +x ${START_SCRIPT_FILE}
 
 	${START_SCRIPT_FILE} >>${log} 2>>${log} </dev/null &
@@ -54,7 +54,7 @@ done
 
 wait $(jobs -p)
 
-for i in {1..$nhosts}
+for myid in $(seq 1 $nhosts)
 do
 	> ${STOP_SCRIPT_FILE}
 	echo "#!/bin/bash" >> ${STOP_SCRIPT_FILE}
