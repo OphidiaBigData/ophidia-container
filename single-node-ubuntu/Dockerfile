@@ -364,9 +364,6 @@ ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ophidia/proj/lib:/usr/local/ophi
 RUN echo "export PATH=$PATH" >> ~/.bashrc && \
 	echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> ~/.bashrc
 
-RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-	echo "source activate /usr/local/ophidia/env" >> ~/.bashrc ; fi
-
 RUN if [ "$jupyter" = "yes" ] ; then \
 	pip install jupyterlab && \
 	mkdir -p /usr/local/ophidia/.jupyter/ && \
@@ -376,16 +373,22 @@ RUN if [ "$jupyter" = "yes" ] ; then \
 	printf "\nYour jupyter password is:\t\'ophidia\'\n" ; fi
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    mkdir -p /usr/local/ophidia/src && \
-    cd /usr/local/ophidia/src && \
-    git clone https://github.com/OphidiaBigData/PyOphidia.git && \
-    cd PyOphidia/ && \
-    git checkout $branch_pyophidia && \
-    pip install . && \
-    rm -rf /usr/local/ophidia/src ; fi
+	mkdir -p /usr/local/ophidia/src && \
+	cd /usr/local/ophidia/src && \
+	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
+	cd PyOphidia/ && \
+	git checkout $branch_pyophidia && \
+	pip install . && \
+	cp -r PyOphidia/utils /usr/local/ophidia/ && \
+	cp -r examples /usr/local/ophidia/ && \
+	rm -f /usr/local/ophidia/examples/utils/tasks && \
+	cp -r PyOphidia/utils/tasks /usr/local/ophidia/examples/utils/ && \
+	rm -rf /usr/local/ophidia/src ; fi
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    conda clean -y --all; fi
+	echo "export PATH=$PATH:/usr/local/ophidia/utils" >> ~/.bashrc && \
+	echo "source activate /usr/local/ophidia/env" >> ~/.bashrc && \
+	conda clean -y --all ; fi
 
 USER root
 
