@@ -18,6 +18,7 @@ ARG branch_terminal=$branch
 ARG branch_pyophidia=$branch
 ARG cjose=no
 ARG zarr=no
+ARG cdo=no
 ARG valgrind=no
 ARG debug_level=0
 
@@ -391,6 +392,19 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	conda clean -y --all ; fi
 
 USER root
+
+#CDO
+RUN	if [ "$cdo" = "yes" ] ; then \
+	cd /repo && \
+	curl -s -O -k https://code.mpimet.mpg.de/attachments/download/29649/cdo-2.4.4.tar.gz && \
+	tar -xzf cdo-2.4.4.tar.gz && \
+	cd cdo-2.4.4 && \
+	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
+	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/local/ophidia/extra/hdf5-ts/include -I/usr/local/ophidia/extra/netcdf-ts/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/local/ophidia/extra/hdf5-ts/include -I/usr/local/ophidia/extra/netcdf-ts/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/local/ophidia/extra/hdf5-ts/lib -L/usr/local/ophidia/extra/netcdf-ts/lib" ./configure --prefix=/usr/local/ophidia/extra --with-hdf5=yes --with-netcdf=yes > /dev/null 2>&1 ; else \
+	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --prefix=/usr/local/ophidia/extra --with-hdf5=yes --with-netcdf=yes > /dev/null 2>&1 ; fi && \
+	make -s > /dev/null 2>&1 && \
+	make install -s > /dev/null 2>&1 && \
+	rm -rf /repo/* ; fi
 
 RUN	service mysql start && \
 	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
