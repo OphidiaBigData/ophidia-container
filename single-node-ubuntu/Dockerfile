@@ -332,7 +332,7 @@ ENV OPH_TERM_FORMAT=extended_compact
 
 USER root
 
-ENV PATH=/usr/local/ophidia/extra/bin:$PATH
+ENV PATH=/usr/local/ophidia/extra/bin:/usr/local/ophidia/extra/netcdf-ts/bin:$PATH
 
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/extra/etc/
 
