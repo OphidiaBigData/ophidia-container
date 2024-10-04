@@ -18,6 +18,7 @@ ARG branch_terminal=$branch
 ARG branch_pyophidia=$branch
 ARG cjose=no
 ARG zarr=no
+ARG s3=no
 ARG cdo=no
 ARG valgrind=no
 ARG debug_level=0
@@ -61,6 +62,9 @@ RUN apt install -y libfl-dev flex bison libmatheval-dev libmatheval1 openssl wge
 RUN if [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Primitives" && \
 	apt install -y gsl-bin libgslcblas0 libgsl-dev autoconf automake libtool\* pkg-config && apt autoremove -y && apt clean -y ; fi
+
+RUN if [ "$s3" = "yes" ] ; then \
+	apt install -y cmake libcurl4-openssl-dev && apt autoremove -y && apt clean -y ; fi
 
 USER ophidia
 
@@ -110,14 +114,41 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* ; fi
 
+#S3 SUPPORT FOR ZARR
+RUN	if [ "$s3" = "yes" ] ; then \
+	mkdir -p /usr/local/ophidia/src && \
+	cd /usr/local/ophidia/src && \
+	git clone https://github.com/Blosc/c-blosc.git && \
+	cd c-blosc && \
+	mkdir build && \
+	cd build && \
+	cmake -DCMAKE_INSTALL_PREFIX=/usr/local/ophidia/extra .. && \
+	cmake --build . --target install && \
+	rm -rf /usr/local/ophidia/src ; fi
+RUN	if [ "$s3" = "yes" ] ; then \
+	mkdir -p /usr/local/ophidia/src && \
+	cd /usr/local/ophidia/src && \
+	git config --global http.version HTTP/1.1 && \
+	git clone https://github.com/aws/aws-sdk-cpp.git && \
+	cd aws-sdk-cpp && \
+	git submodule update --init --recursive && \
+	mkdir build && \
+	cd build && \
+	cmake /usr/local/ophidia/src/aws-sdk-cpp -DBUILD_ONLY=s3 -DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local/ophidia/extra && \
+	make -j -k -s > /dev/null 2>&1 && \
+	make install -s > /dev/null 2>&1 && \
+	rm -rf /usr/local/ophidia/src ; fi
+
 #NETCDF-MPICH
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	apt install -y git libcurl4-openssl-dev libxml2 libxml2-dev && apt autoremove -y && apt clean -y && \
+	apt install -y libcurl4-openssl-dev libxml2 libxml2-dev && apt autoremove -y && apt clean -y && \
 	cd /repo && \
 	git clone https://github.com/Unidata/netcdf-c.git && \
 	cd netcdf-c* && \
 	git checkout tags/v4.9.2 && \
-	CC=/usr/bin/mpicc CPPFLAGS="-I/usr/local/ophidia/extra/hdf5-ts/include/" LDFLAGS="-L/usr/local/ophidia/extra/hdf5-ts/lib/" LIBS=-ldl H5DIR=/usr/local/ophidia/extra/hdf5-ts/ ./configure --prefix=/usr/local/ophidia/extra/netcdf-ts --enable-netcdf4 --with-plugin-dir=/usr/local/ophidia/extra/netcdf-ts/lib/plugins > /dev/null 2>&1 && \
+	if [ "$zarr" = "yes" ] ; then sed -i "s/\t    if(zvar->scalar)/\t    if(zvar->scalar || !zarr_rank)/g" libnczarr/zsync.c ; fi && \
+	if [ "$s3" = "yes" ] ; then enable_s3="--enable-s3" ; library_s3="-laws-cpp-sdk-s3" ; fi && \
+	CC=/usr/bin/mpicc CFLAGS="-I/usr/local/ophidia/extra/include/" CPPFLAGS="-I/usr/local/ophidia/extra/include/ -I/usr/local/ophidia/extra/hdf5-ts/include/" LDFLAGS="-L/usr/local/ophidia/extra/lib/ -L/usr/local/ophidia/extra/lib64/ -L/usr/local/ophidia/extra/hdf5-ts/lib/" LIBS="-ldl $library_s3" H5DIR=/usr/local/ophidia/extra/hdf5-ts/ ./configure --prefix=/usr/local/ophidia/extra/netcdf-ts --enable-netcdf4 --with-plugin-dir=/usr/local/ophidia/extra/netcdf-ts/lib/plugins $enable_s3 > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* ; fi
@@ -183,7 +214,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	cd ophidia-analytics-framework && \
 	git checkout $branch_analytics_framework && \
 	./bootstrap > /dev/null 2>&1 && \
-	if [ "$zarr" = "yes" ] ; then enable_zarr = "--enable-zarr" ; fi && \
+	if [ "$zarr" = "yes" ] ; then enable_zarr="--enable-zarr" ; fi && \
 	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-parallel-netcdf --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ophidiaio-server-path=/usr/local/ophidia/oph-cluster/oph-io-server --enable-cfitsio --with-debug-level=$debug_level $enable_zarr > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
@@ -363,7 +394,8 @@ ENV PATH=/usr/local/ophidia/env/bin:$PATH:/usr/local/ophidia/proj/bin:/usr/local
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ophidia/proj/lib:/usr/local/ophidia/.local/lib
 
 RUN echo "export PATH=$PATH" >> ~/.bashrc && \
-	echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> ~/.bashrc
+	echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> ~/.bashrc && \
+	echo "export HDF5_PLUGIN_PATH=$HDF5_PLUGIN_PATH" >> ~/.bashrc
 
 RUN if [ "$jupyter" = "yes" ] ; then \
 	pip install jupyterlab && \
