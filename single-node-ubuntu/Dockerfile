@@ -109,7 +109,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	wget -q https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.1/src/hdf5-1.12.1.tar.gz && \
 	gzip -cd hdf5-1.12.1.tar.gz | tar xf - && \
 	cd hdf5-1.12.1/ && \
-	./configure --prefix=/usr/local/ophidia/extra/hdf5-ts/ --enable-parallel --enable-threadsafe --enable-unsupported --with-zlib > /dev/null 2>&1 && \
+	./configure --prefix=/usr/local/ophidia/extra/ --enable-parallel --enable-threadsafe --enable-unsupported --with-zlib > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* ; fi
@@ -146,14 +146,16 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	git clone https://github.com/Unidata/netcdf-c.git && \
 	cd netcdf-c* && \
 	git checkout tags/v4.9.2 && \
-	if [ "$zarr" = "yes" ] ; then sed -i "s/\t    if(zvar->scalar)/\t    if(zvar->scalar || !zarr_rank)/g" libnczarr/zsync.c ; fi && \
+	if [ "$zarr" = "yes" ] ; then \
+		sed -i "s/\t    if(zvar->scalar)/\t    if(zvar->scalar || !zarr_rank)/g" libnczarr/zsync.c && \
+		sed -i "s/# The HDF5 filter wrappers/LDADD = ..\/liblib\/libnetcdf.la\nLIBADD = ..\/liblib\/libnetcdf.la\n# The HDF5 filter wrappers/g" plugins/Makefile.in ; fi && \
 	if [ "$s3" = "yes" ] ; then enable_s3="--enable-s3" ; library_s3="-laws-cpp-sdk-s3" ; fi && \
-	CC=/usr/bin/mpicc CFLAGS="-I/usr/local/ophidia/extra/include/" CPPFLAGS="-I/usr/local/ophidia/extra/include/ -I/usr/local/ophidia/extra/hdf5-ts/include/" LDFLAGS="-L/usr/local/ophidia/extra/lib/ -L/usr/local/ophidia/extra/lib64/ -L/usr/local/ophidia/extra/hdf5-ts/lib/" LIBS="-ldl $library_s3" H5DIR=/usr/local/ophidia/extra/hdf5-ts/ ./configure --prefix=/usr/local/ophidia/extra/netcdf-ts --enable-netcdf4 --with-plugin-dir=/usr/local/ophidia/extra/netcdf-ts/lib/plugins $enable_s3 > /dev/null 2>&1 && \
+	CC=/usr/bin/mpicc CPP=/usr/bin/mpicxx CFLAGS="-I/usr/local/ophidia/extra/include/" CPPFLAGS="-I/usr/local/ophidia/extra/include/" LDFLAGS="-L/usr/local/ophidia/extra/lib/" LIBS="-ldl $library_s3" H5DIR=/usr/local/ophidia/extra/ ./configure --prefix=/usr/local/ophidia/extra --enable-netcdf4 --with-plugin-dir=/usr/local/ophidia/extra/lib/plugins $enable_s3 > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* ; fi
 
-ENV	HDF5_PLUGIN_PATH=/usr/local/ophidia/extra/netcdf-ts/lib/plugins
+ENV	HDF5_PLUGIN_PATH=/usr/local/ophidia/extra/lib/plugins
 
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia I/O Server" && \
@@ -168,7 +170,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	cd ophidia-io-server && \
 	git checkout $branch_io_server && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-io-server --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --enable-parallel-nc4 > /dev/null 2>&1 && \
+	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-io-server --with-netcdf-path=/usr/local/ophidia/extra/ --enable-parallel-nc4 > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	mkdir -p /usr/local/ophidia/oph-cluster/oph-io-server/data1/var && \
@@ -215,7 +217,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	git checkout $branch_analytics_framework && \
 	./bootstrap > /dev/null 2>&1 && \
 	if [ "$zarr" = "yes" ] ; then enable_zarr="--enable-zarr" ; fi && \
-	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-parallel-netcdf --with-netcdf-path=/usr/local/ophidia/extra/netcdf-ts/ --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ophidiaio-server-path=/usr/local/ophidia/oph-cluster/oph-io-server --enable-cfitsio --with-debug-level=$debug_level $enable_zarr > /dev/null 2>&1 && \
+	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-parallel-netcdf --with-netcdf-path=/usr/local/ophidia/extra/ --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ophidiaio-server-path=/usr/local/ophidia/oph-cluster/oph-io-server --enable-cfitsio --with-debug-level=$debug_level $enable_zarr > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /usr/local/ophidia/src && \
@@ -363,7 +365,8 @@ ENV OPH_TERM_FORMAT=extended_compact
 
 USER root
 
-ENV PATH=/usr/local/ophidia/extra/bin:/usr/local/ophidia/extra/netcdf-ts/bin:$PATH
+ENV PATH=/usr/local/ophidia/extra/bin:$PATH
+ENV LD_LIBRARY_PATH=/usr/local/ophidia/extra/lib:$HDF5_PLUGIN_PATH:$LD_LIBRARY_PATH
 
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/extra/etc/
 
@@ -432,7 +435,7 @@ RUN	if [ "$cdo" = "yes" ] ; then \
 	tar -xzf cdo-2.4.4.tar.gz && \
 	cd cdo-2.4.4 && \
 	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/local/ophidia/extra/hdf5-ts/include -I/usr/local/ophidia/extra/netcdf-ts/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/local/ophidia/extra/hdf5-ts/include -I/usr/local/ophidia/extra/netcdf-ts/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/local/ophidia/extra/hdf5-ts/lib -L/usr/local/ophidia/extra/netcdf-ts/lib" ./configure --prefix=/usr/local/ophidia/extra --with-hdf5=yes --with-netcdf=yes > /dev/null 2>&1 ; else \
+	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/local/ophidia/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/local/ophidia/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/local/ophidia/extra/lib" ./configure --prefix=/usr/local/ophidia/extra --with-hdf5=yes --with-netcdf=yes > /dev/null 2>&1 ; else \
 	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --prefix=/usr/local/ophidia/extra --with-hdf5=yes --with-netcdf=yes > /dev/null 2>&1 ; fi && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
