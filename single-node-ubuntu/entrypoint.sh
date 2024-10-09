@@ -9,16 +9,16 @@ function finalize_deploy()
 	cd /usr/local/ophidia
 	if [[ $CLIENT_SERVICE == "terminal" ]]
 	then
-		su -c "/usr/local/ophidia/oph-terminal/bin/oph_term" ophidia
+		su -c ". ~/.bashrc; /usr/local/ophidia/oph-terminal/bin/oph_term" ophidia
 	elif [[ $CLIENT_SERVICE == "terminal_only" ]]
 	then
-		su -c "/usr/local/ophidia/oph-terminal/bin/oph_term -H $_SERVER_HOST -P $_SERVER_PORT -u $_USER -p $_PASSWD" ophidia
+		su -c ". ~/.bashrc; /usr/local/ophidia/oph-terminal/bin/oph_term -H $_SERVER_HOST -P $_SERVER_PORT -u $_USER -p $_PASSWD" ophidia
 	elif [[ $CLIENT_SERVICE == "jupyter" ]]
 	then
 		su -c ". ~/.bashrc; jupyter-lab --no-browser --notebook-dir=/usr/local/ophidia --port=$JUPYTER_PORT --ip=$HOSTNAME" -s /bin/bash ophidia
 	elif [[ $CLIENT_SERVICE == "python" ]]
 	then
-		su -c "/usr/local/ophidia/env/bin/python" ophidia
+		su -c ". ~/.bashrc; /usr/local/ophidia/env/bin/python" ophidia
 	fi
 }
 
@@ -75,6 +75,8 @@ if ${SLURM_BUILD} ; then
 fi
 
 su - ophidia <<EOF
+. ~/.bashrc;
+
 if ${SLURM_BUILD} ; then
 	sed -i "s/ControlAddr=.*/ControlAddr=${HOSTNAME}/g" /usr/local/ophidia/extra/etc/slurm.conf
 	sed -i "s/CPUs=.*/CPUs=$(grep processor /proc/cpuinfo | wc -l)/g" /usr/local/ophidia/extra/etc/slurm.conf
