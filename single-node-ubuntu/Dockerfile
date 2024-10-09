@@ -147,7 +147,8 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	cd netcdf-c* && \
 	git checkout tags/v4.9.2 && \
 	if [ "$zarr" = "yes" ] ; then \
-		sed -i "s/assert (zarr_rank == NCJlength(jvalue));\t    if(zvar->scalar)/if(zvar->scalar || !zarr_rank)/g" libnczarr/zsync.c && \
+		sed -i "s/assert (zarr_rank == NCJlength(jvalue));/\/\/assert (zarr_rank == NCJlength(jvalue));/g" libnczarr/zsync.c && \
+		sed -i "s/\t    if(zvar->scalar)/\t    if(zvar->scalar || \!zarr_rank)/g" libnczarr/zsync.c && \
 		sed -i "s/# The HDF5 filter wrappers/LDADD = ..\/liblib\/libnetcdf.la\nLIBADD = ..\/liblib\/libnetcdf.la\n# The HDF5 filter wrappers/g" plugins/Makefile.in ; fi && \
 	if [ "$s3" = "yes" ] ; then enable_s3="--enable-s3" ; library_s3="-laws-cpp-sdk-s3" ; fi && \
 	CC=/usr/bin/mpicc CPP=/usr/bin/mpicxx CFLAGS="-I/usr/local/ophidia/extra/include/" CPPFLAGS="-I/usr/local/ophidia/extra/include/" LDFLAGS="-L/usr/local/ophidia/extra/lib/" LIBS="-ldl $library_s3" H5DIR=/usr/local/ophidia/extra/ ./configure --prefix=/usr/local/ophidia/extra --enable-netcdf4 --with-plugin-dir=/usr/local/ophidia/extra/lib/plugins $enable_s3 > /dev/null 2>&1 && \
