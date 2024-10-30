@@ -441,7 +441,7 @@ RUN	if [ "$cdo" = "yes" ] ; then \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* && \
-	echo "CDO_PATH=/usr/local/ophidia/extra" >> /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
+	echo "CDO_PATH=/usr/local/ophidia/extra/bin" >> /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
 
 RUN	service mysql start && \
 	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
