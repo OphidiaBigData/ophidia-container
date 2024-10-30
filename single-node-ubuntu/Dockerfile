@@ -440,7 +440,8 @@ RUN	if [ "$cdo" = "yes" ] ; then \
 	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --prefix=/usr/local/ophidia/extra --with-hdf5=yes --with-netcdf=yes > /dev/null 2>&1 ; fi && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
-	rm -rf /repo/* ; fi
+	rm -rf /repo/* && \
+	echo "CDO_PATH=/usr/local/ophidia/extra/cdo/bin" >> /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
 
 RUN	service mysql start && \
 	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
