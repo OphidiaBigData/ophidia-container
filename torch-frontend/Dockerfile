@@ -83,18 +83,18 @@ RUN mkdir /certs \
 #     update-ca-trust
 
 # Add async ssh script
-COPY env-files/torch/jupyter/asyncssh_config.py /opt/ssh/jupyterhub-singleuser
+COPY asyncssh_config.py /opt/ssh/jupyterhub-singleuser
 RUN fix-permissions /opt/ssh/jupyterhub-singleuser \
     && chown -R $NB_UID /opt/ssh/jupyterhub-singleuser \
     && chmod +x /opt/ssh/jupyterhub-singleuser
 
 # Setup extension Rucio instance config
-COPY env-files/torch/jupyter/configure.py /opt/setup-rucio-jupyterlab/configure.py
+COPY configure.py /opt/setup-rucio-jupyterlab/configure.py
 RUN fix-permissions /opt/setup-rucio-jupyterlab/configure.py \
     && chown -R $NB_UID /opt/setup-rucio-jupyterlab/configure.py \
     && chmod +x /opt/setup-rucio-jupyterlab/configure.py
 
-COPY env-files/torch/jupyter/setup.sh /usr/local/bin/setup.sh
+COPY setup.sh /usr/local/bin/setup.sh
 RUN fix-permissions /usr/local/bin/setup.sh \
     && sed -i -e 's/\r$/\n/' /usr/local/bin/setup.sh \
     && chmod +x /usr/local/bin/setup.sh
@@ -128,22 +128,16 @@ RUN pip install --no-cache-dir --upgrade pip \
 
 USER root
 
-RUN apt install -y graphviz && apt autoremove -y && apt clean -y
+RUN apt-get update && apt-get install -y graphviz && apt-get clean -y
 
 USER $NB_UID
 
 ENV OPHIDIA_DIR=$HOME/ophidia
-ENV CONDA_DIR=$HOME/conda
-ENV PATH=$CONDA_DIR/bin:$PATH
 
-RUN	cd $HOME && \
-	wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-$(uname -m).sh -O miniconda.sh && \
-    bash miniconda.sh -b -p $CONDA_DIR && \
-    rm -r miniconda.sh
-
-ADD environment.yml /usr/local/ophidia/environment.yml
-RUN $CONDA_DIR/bin/conda env create -f /usr/local/ophidia/environment.yml -p $OPHIDIA_DIR/env
-RUN rm -r /usr/local/ophidia/environment.yml
+RUN mkdir -p $OPHIDIA_DIR
+ADD environment.yml $OPHIDIA_DIR/environment.yml
+RUN conda env create -f $OPHIDIA_DIR/environment.yml -p $OPHIDIA_DIR/env
+RUN rm -r $OPHIDIA_DIR/environment.yml
 
 RUN mkdir -p $OPHIDIA_DIR/src && \
 	cd $OPHIDIA_DIR/src && \
@@ -159,7 +153,7 @@ RUN mkdir -p $OPHIDIA_DIR/src && \
 
 RUN echo "export PATH=$PATH:$OPHIDIA_DIR/utils" >> ~/.bashrc && \
 	echo "source activate $OPHIDIA_DIR/env" >> ~/.bashrc && \
-	$CONDA_DIR/bin/conda clean -y --all
+	conda clean -y --all
 
 #############################
 ###        itwinai        ###
@@ -275,19 +269,8 @@ RUN pip install --no-cache-dir \
     "prov4ml[nvidia]@git+https://github.com/matbun/ProvML@e99bddba047a1a04ca0387e87cad1ed96d5ab2c5" \
     ray[tune]
 
-
-# Core itwinai lib
-WORKDIR "$HOME/itwinai"
-COPY pyproject.toml pyproject.toml
-COPY src src
-RUN pip install --no-cache-dir ".[torch,dev]" \
-    && itwinai sanity-check --torch \
-    --optional-deps deepspeed \
-    --optional-deps horovod \
-    --optional-deps ray
-
 # Additional pip deps
-ARG REQUIREMENTS=env-files/torch/requirements/requirements.txt
+ARG REQUIREMENTS=requirements.txt
 COPY "${REQUIREMENTS}" additional-requirements.txt
 RUN pip install --no-cache-dir -r additional-requirements.txt
 
