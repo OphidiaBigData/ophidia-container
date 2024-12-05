@@ -377,22 +377,17 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 ENV CONDA_DIR=/opt/conda
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
     wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-$(uname -m).sh -O miniconda.sh && \
-    bash miniconda.sh -b -p /opt/conda && \
+    bash miniconda.sh -b -p $CONDA_DIR && \
     rm -r miniconda.sh ; fi
 ENV PATH=$CONDA_DIR/bin:$PATH
 
 USER ophidia
 
 ENV PATH=$CONDA_DIR/bin:$PATH
-ADD environment.yml /tmp/environment.yml
+ADD environment.yml /usr/local/ophidia/environment.yml
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    conda env create -f /tmp/environment.yml -p /usr/local/ophidia/env ; fi
-
-USER root
-
-RUN rm -r /tmp/environment.yml
-
-USER ophidia
+    conda env create -f /usr/local/ophidia/environment.yml -p /usr/local/ophidia/env ; fi
+RUN rm -r /usr/local/ophidia/environment.yml
 
 ENV PATH=/usr/local/ophidia/env/bin:$PATH:/usr/local/ophidia/proj/bin:/usr/local/ophidia/.local/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ophidia/proj/lib:/usr/local/ophidia/.local/lib
