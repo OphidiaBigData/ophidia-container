@@ -148,7 +148,7 @@ RUN mkdir -p $OPHIDIA_DIR/src && \
 	rm -f $OPHIDIA_DIR/examples/utils/tasks && \
 	cp -r PyOphidia/utils/tasks $OPHIDIA_DIR/examples/utils/ && \
 	rm -rf $OPHIDIA_DIR/src && \
-	echo "export PATH=$PATH:$OPHIDIA_DIR/utils" >> ~/.bashrc ; fi
+	echo "export PATH=$PATH:$OPHIDIA_DIR/utils" >> ~/.bashrc
 
 #############################
 ###        itwinai        ###
