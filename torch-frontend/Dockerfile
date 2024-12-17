@@ -133,12 +133,10 @@ RUN apt-get update && apt-get install -y graphviz && apt-get clean -y
 USER $NB_UID
 
 ENV OPHIDIA_DIR=$HOME/ophidia
-
 RUN mkdir -p $OPHIDIA_DIR
-ADD environment.yml $OPHIDIA_DIR/environment.yml
-RUN conda env create -f $OPHIDIA_DIR/environment.yml -p $OPHIDIA_DIR/env
-RUN rm -r $OPHIDIA_DIR/environment.yml
-
+ADD requirements.txt $OPHIDIA_DIR/requirements.txt
+RUN pip install --no-cache-dir -r $OPHIDIA_DIR/requirements.txt
+RUN rm -rf $OPHIDIA_DIR/requirements.txt
 RUN mkdir -p $OPHIDIA_DIR/src && \
 	cd $OPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
@@ -149,11 +147,8 @@ RUN mkdir -p $OPHIDIA_DIR/src && \
 	cp -r examples $OPHIDIA_DIR/ && \
 	rm -f $OPHIDIA_DIR/examples/utils/tasks && \
 	cp -r PyOphidia/utils/tasks $OPHIDIA_DIR/examples/utils/ && \
-	rm -rf $OPHIDIA_DIR/src
-
-RUN echo "export PATH=$PATH:$OPHIDIA_DIR/utils" >> ~/.bashrc && \
-	echo "source activate $OPHIDIA_DIR/env" >> ~/.bashrc && \
-	conda clean -y --all
+	rm -rf $OPHIDIA_DIR/src && \
+	echo "export PATH=$PATH:$OPHIDIA_DIR/utils" >> ~/.bashrc ; fi
 
 #############################
 ###        itwinai        ###
@@ -268,11 +263,6 @@ RUN pip install --no-cache-dir \
     git+https://github.com/horovod/horovod.git@3a31d93 \
     "prov4ml[nvidia]@git+https://github.com/matbun/ProvML@e99bddba047a1a04ca0387e87cad1ed96d5ab2c5" \
     ray[tune]
-
-# Additional pip deps
-ARG REQUIREMENTS=requirements.txt
-COPY "${REQUIREMENTS}" additional-requirements.txt
-RUN pip install --no-cache-dir -r additional-requirements.txt
 
 WORKDIR $HOME
 

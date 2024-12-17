@@ -29,7 +29,7 @@ OPH_IOSERVER_LOCATION=/usr/local/ophidia/oph-cluster/oph-io-server
 IO_SERVER_PATH=${OPH_IOSERVER_LOCATION}/bin/oph_io_server
 OPH_SERVER_LOCATION=/usr/local/ophidia/oph-server
 IO_SERVER_TEMPLATE=${OPH_SERVER_LOCATION}/etc/script/oph_ioserver.conf.template
-SCRIPT_DIR=/usr/local/ophidia/.ophidia
+SCRIPT_DIR=${HOME}/.ophidia
 NO_MEMORY_CHECK=$(cat /usr/local/ophidia/oph-cluster/oph-io-server/etc/memory_check)
 
 # Body

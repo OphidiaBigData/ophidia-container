@@ -23,7 +23,7 @@ hpid=${1}
 myid=${2}
 
 # Const
-SCRIPT_DIR=/usr/local/ophidia/.ophidia
+SCRIPT_DIR=${HOME}/.ophidia
 
 # Body
 myhost="127.0.${myid}.1"

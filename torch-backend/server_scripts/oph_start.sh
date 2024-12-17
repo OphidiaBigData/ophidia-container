@@ -33,7 +33,7 @@ taskname=${9}
 OPH_SERVER_LOCATION=/usr/local/ophidia/oph-server
 IO_SERVER_LAUNCHER=${OPH_SERVER_LOCATION}/etc/script/start_ioserver.sh
 IO_SERVER_FLUSHER=${OPH_SERVER_LOCATION}/etc/script/stop_ioserver.sh
-SCRIPT_DIR=/usr/local/ophidia/.ophidia
+SCRIPT_DIR=${HOME}/.ophidia
 START_SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.submit.sh
 STOP_SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.stop.sh
 

@@ -30,7 +30,7 @@ project=${8}
 
 # Const
 FRAMEWORK_PATH=/usr/local/ophidia/oph-cluster/oph-analytics-framework
-SCRIPT_DIR=/usr/local/ophidia/.ophidia
+SCRIPT_DIR=${HOME}/.ophidia
 SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.submit.sh
 
 # Body

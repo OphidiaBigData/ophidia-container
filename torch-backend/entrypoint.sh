@@ -9,10 +9,10 @@ function finalize_deploy()
 	cd /usr/local/ophidia
 	if [[ $CLIENT_SERVICE == "jupyter" ]]
 	then
-		su -c ". ~/.bashrc; jupyter-lab --no-browser --notebook-dir=/usr/local/ophidia --port=$JUPYTER_PORT --ip=$HOSTNAME" -s /bin/bash ophidia
+		su -c ". ~/.bashrc; jupyter-lab --no-browser --notebook-dir=/usr/local/ophidia --port=$JUPYTER_PORT --ip=$HOSTNAME" -s /bin/bash jovyan
 	elif [[ $CLIENT_SERVICE == "python" ]]
 	then
-		su -c ". ~/.bashrc; /usr/local/ophidia/env/bin/python" ophidia
+		su -c ". ~/.bashrc; /opt/conda/bin/python" jovyan
 	fi
 }
 
@@ -58,7 +58,7 @@ if ${SLURM_BUILD} ; then
 	sudo -u munge remunge >/dev/null
 fi
 
-su - ophidia <<EOF
+su - jovyan <<EOF
 . ~/.bashrc;
 
 if ${SLURM_BUILD} ; then
