@@ -1,0 +1,13 @@
+bokeh
+cartopy
+jupyter
+jupyterlab
+matplotlib
+notebook
+numpy
+pandas
+scipy
+shapely
+xarray
+cwltool
+
