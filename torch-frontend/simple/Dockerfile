@@ -11,6 +11,7 @@ RUN mkdir -p $PYOPHIDIA_DIR
 ADD requirements.txt $PYOPHIDIA_DIR/requirements.txt
 RUN pip install --no-cache-dir -r $PYOPHIDIA_DIR/requirements.txt
 RUN rm -rf $PYOPHIDIA_DIR/requirements.txt
+
 RUN mkdir -p $PYOPHIDIA_DIR/src && \
 	cd $PYOPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/PyOphidia.git && \

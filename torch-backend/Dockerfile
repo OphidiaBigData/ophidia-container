@@ -350,8 +350,9 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 USER $NB_UID
 
 ENV PATH=$OPHIDIA_DIR/extra/bin:$PATH
-ENV PYOPHIDIA_DIR=$HOME/pyophidia
 
+ENV PYOPHIDIA_DIR=$HOME/pyophidia
+RUN mkdir -p $PYOPHIDIA_DIR
 ADD requirements.txt $PYOPHIDIA_DIR/requirements.txt
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	pip install --no-cache-dir -r $PYOPHIDIA_DIR/requirements.txt ; fi
