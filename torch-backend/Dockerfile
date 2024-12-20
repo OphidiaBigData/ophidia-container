@@ -350,11 +350,12 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 USER $NB_UID
 
 ENV PATH=$OPHIDIA_DIR/extra/bin:$PATH
+ENV PYOPHIDIA_DIR=$HOME/pyophidia
 
-ADD requirements.txt $OPHIDIA_DIR/requirements.txt
+ADD requirements.txt $PYOPHIDIA_DIR/requirements.txt
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-	pip install --no-cache-dir -r $OPHIDIA_DIR/requirements.txt ; fi
-RUN rm -rf $OPHIDIA_DIR/requirements.txt
+	pip install --no-cache-dir -r $PYOPHIDIA_DIR/requirements.txt ; fi
+RUN rm -rf $PYOPHIDIA_DIR/requirements.txt
 
 ENV PATH=$OPHIDIA_DIR/env/bin:$PATH:$OPHIDIA_DIR/proj/bin:$OPHIDIA_DIR/.local/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$OPHIDIA_DIR/proj/lib:$OPHIDIA_DIR/.local/lib
@@ -372,18 +373,18 @@ RUN if [ "$jupyter" = "yes" ] ; then \
 	printf "\nYour jupyter password is:\t\'ophidia\'\n" ; fi
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-	mkdir -p $OPHIDIA_DIR/src && \
-	cd $OPHIDIA_DIR/src && \
+	mkdir -p $PYOPHIDIA_DIR/src && \
+	cd $PYOPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
 	cd PyOphidia/ && \
 	git checkout $branch_pyophidia && \
 	pip install . && \
-	cp -r PyOphidia/utils $OPHIDIA_DIR/ && \
-	cp -r examples $OPHIDIA_DIR/ && \
-	rm -f $OPHIDIA_DIR/examples/utils/tasks && \
-	cp -r PyOphidia/utils/tasks $OPHIDIA_DIR/examples/utils/ && \
-	rm -rf $OPHIDIA_DIR/src && \
-	echo "export PATH=$PATH:$OPHIDIA_DIR/utils" >> ~/.bashrc ; fi
+	cp -r PyOphidia/utils $PYOPHIDIA_DIR/ && \
+	cp -r examples $PYOPHIDIA_DIR/ && \
+	rm -f $PYOPHIDIA_DIR/examples/utils/tasks && \
+	cp -r PyOphidia/utils/tasks $PYOPHIDIA_DIR/examples/utils/ && \
+	rm -rf $PYOPHIDIA_DIR/src && \
+	echo "export PATH=$PATH:$PYOPHIDIA_DIR/utils" >> ~/.bashrc ; fi
 
 USER root
 

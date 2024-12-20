@@ -6,23 +6,23 @@ RUN apt-get update && apt-get install -y graphviz && apt-get clean -y
 
 USER $NB_UID
 
-ENV OPHIDIA_DIR=$HOME/ophidia
-RUN mkdir -p $OPHIDIA_DIR
-ADD requirements.txt $OPHIDIA_DIR/requirements.txt
-RUN pip install --no-cache-dir -r $OPHIDIA_DIR/requirements.txt
-RUN rm -rf $OPHIDIA_DIR/requirements.txt
-RUN mkdir -p $OPHIDIA_DIR/src && \
-	cd $OPHIDIA_DIR/src && \
+ENV PYOPHIDIA_DIR=$HOME/pyophidia
+RUN mkdir -p $PYOPHIDIA_DIR
+ADD requirements.txt $PYOPHIDIA_DIR/requirements.txt
+RUN pip install --no-cache-dir -r $PYOPHIDIA_DIR/requirements.txt
+RUN rm -rf $PYOPHIDIA_DIR/requirements.txt
+RUN mkdir -p $PYOPHIDIA_DIR/src && \
+	cd $PYOPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
 	cd PyOphidia/ && \
 	git checkout release && \
 	pip install . && \
-	cp -r PyOphidia/utils $OPHIDIA_DIR/ && \
-	cp -r examples $OPHIDIA_DIR/ && \
-	rm -f $OPHIDIA_DIR/examples/utils/tasks && \
-	cp -r PyOphidia/utils/tasks $OPHIDIA_DIR/examples/utils/ && \
-	rm -rf $OPHIDIA_DIR/src && \
-	echo "export PATH=$PATH:$OPHIDIA_DIR/utils" >> ~/.bashrc
+	cp -r PyOphidia/utils $PYOPHIDIA_DIR/ && \
+	cp -r examples $PYOPHIDIA_DIR/ && \
+	rm -f $PYOPHIDIA_DIR/examples/utils/tasks && \
+	cp -r PyOphidia/utils/tasks $PYOPHIDIA_DIR/examples/utils/ && \
+	rm -rf $PYOPHIDIA_DIR/src && \
+	echo "export PATH=$PATH:$PYOPHIDIA_DIR/utils" >> ~/.bashrc
 
 WORKDIR $HOME
 
