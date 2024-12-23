@@ -6,6 +6,9 @@ function finalize_deploy()
 	if [[ $CLIENT_SERVICE == "log" ]]
 	then
 		tail -f /usr/local/ophidia/oph-server/log/server.log
+	elif [[ $CLIENT_SERVICE == "terminal" ]]
+	then
+		su -c ". ~/.bashrc; /usr/local/ophidia/oph-terminal/bin/oph_term" jovyan
 	elif [[ $CLIENT_SERVICE == "jupyter" ]]
 	then
 		su -c ". ~/.bashrc; jupyter-lab --no-browser --notebook-dir=/usr/local/ophidia --port=$JUPYTER_PORT --ip=$HOSTNAME" -s /bin/bash jovyan
@@ -23,8 +26,11 @@ then
 elif [ ${JUPYTER} == "yes" ]
 then
 	CLIENT_SERVICE=${DEPLOY:-'jupyter'}
-else
+elif [ $PYTHON == "yes" ]
+then
 	CLIENT_SERVICE=${DEPLOY:-'python'}
+else
+	CLIENT_SERVICE=${DEPLOY:-'terminal'}
 fi
 
 [ -z "${DEBUG}" ] && DEBUG="" || DEBUG="-d"

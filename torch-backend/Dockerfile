@@ -8,12 +8,18 @@ ARG python=no
 ARG main_partition=yes
 ARG ioservers=0
 ARG version=1.9.0
+ARG version_primitives=$version
+ARG version_io_server=$version
+ARG version_analytics_framework=$version
+ARG version_server=$version
+ARG version_terminal=$version
 ARG devel=no
 ARG branch=master
 ARG branch_primitives=$branch
 ARG branch_io_server=$branch
 ARG branch_analytics_framework=$branch
 ARG branch_server=$branch
+ARG branch_terminal=$branch
 ARG branch_pyophidia=$branch
 ARG cjose=no
 ARG zarr=no
@@ -84,7 +90,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 USER root
 
 RUN if [ "$devel" != "yes" ] ; then \
-	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v$version/ophidia-primitives_$version*.deb && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v${version_primitives}/ophidia-primitives_${version_primitives}-0_amd64.deb && \
 	apt install -y ophidia-primitives_*.deb && apt autoremove -y && apt clean -y &&\
 	chown -R $NB_UID:$NB_UID $OPHIDIA_DIR && \
 	rm -rf /repo/* ; fi
@@ -181,7 +187,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 USER root
 
 RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
-	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-io-server/releases/download/v$version/ophidia-io-server_$version*.deb && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-io-server/releases/download/v${version_io_server}/ophidia-io-server_${version_io_server}-0_amd64.deb && \
 	apt install -y ophidia-io-server_*.deb && apt autoremove -y && apt clean -y && \
 	chown -R $NB_UID:$NB_UID $OPHIDIA_DIR && \
 	sed -i "s/127.0.0.1/0.0.0.0/g" $OPHIDIA_DIR/oph-cluster/oph-io-server/etc/oph_ioserver.conf && \
@@ -227,7 +233,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 USER root
 
 RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
-	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-analytics-framework/releases/download/v$version/ophidia-analytics-framework_$version*.deb && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-analytics-framework/releases/download/v${version_analytics_framework}/ophidia-analytics-framework_${version_analytics_framework}-0_amd64.deb && \
 	apt install -y ophidia-analytics-framework_*.deb && apt autoremove -y && apt clean -y && \
 	chown -R $NB_UID:$NB_UID $OPHIDIA_DIR && \
 	chown -R $NB_UID:$NB_UID /var/www/html/ophidia && \
@@ -272,7 +278,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 USER root
 
 RUN if [ "$devel" != "yes" ] ; then \
-	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-server/releases/download/v$version/ophidia-server_$version*.deb && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-server/releases/download/v${version_server}/ophidia-server_${version_server}-0_amd64.deb && \
 	apt install -y ophidia-server_*.deb && apt autoremove -y && apt clean -y && \
 	chown -R $NB_UID:$NB_UID $OPHIDIA_DIR && \
 	touch $OPHIDIA_DIR/oph-server/log/server.log && \
@@ -319,6 +325,25 @@ RUN apt install -y apache2-bin php libapache2-mod-php && \
 	cp -f server.crt /etc/ssl/certs/ssl-cert-snakeoil.pem && \
 	cp -f server.key /etc/ssl/private/ssl-cert-snakeoil.key && \
 	a2enmod ssl && a2enmod headers && a2ensite default-ssl
+
+#OPHIDIA TERMINAL
+RUN if [ "$devel" = "yes" ] ; then \
+	echo "Using online source code for Ophidia Terminal" && \
+	apt install -y graphviz-dev libgtk2.0-dev policycoreutils-python-utils libreadline-dev && apt autoremove -y && apt clean -y ; fi
+
+USER $NB_UID
+
+RUN if [ "$devel" = "yes" ] ; then \
+	mkdir -p $OPHIDIA_DIR/src && \
+	cd $OPHIDIA_DIR/src && \
+	git clone https://github.com/OphidiaBigData/ophidia-terminal && \
+	cd ophidia-terminal && \
+	git checkout $branch_terminal && \
+	./bootstrap > /dev/null 2>&1 && \
+	./configure --prefix=$OPHIDIA_DIR/oph-terminal --disable-xml-ssl-check --disable-xml-removal > /dev/null 2>&1 && \
+	make -s > /dev/null 2>&1 && \
+	make install -s > /dev/null 2>&1 && \
+	rm -rf $OPHIDIA_DIR/src ; fi
 
 #OPERATORS_FIXES
 RUN cd $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/etc/operators_xml/ && \
@@ -426,7 +451,8 @@ COPY server_scripts/stop_ioserver.sh $OPHIDIA_DIR/oph-server/etc/script/stop_ios
 COPY server_scripts/oph_ioserver.conf.template $OPHIDIA_DIR/oph-server/etc/script/oph_ioserver.conf.template
 COPY entrypoint.sh /
 
-RUN	echo "ENABLE_CLUSTER_DEPLOYMENT=yes\nENABLE_CLUSTER_INCREASE=yes" >> $OPHIDIA_DIR/oph-server/etc/server.conf
+RUN	echo "ENABLE_CLUSTER_DEPLOYMENT=yes" >> $OPHIDIA_DIR/oph-server/etc/server.conf
+RUN	echo "ENABLE_CLUSTER_INCREASE=yes" >> $OPHIDIA_DIR/oph-server/etc/server.conf
 
 EXPOSE 11732
 EXPOSE 8888

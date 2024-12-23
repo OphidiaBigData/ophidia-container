@@ -8,6 +8,11 @@ ARG python=no
 ARG main_partition=yes
 ARG ioservers=0
 ARG version=1.9.0
+ARG version_primitives=$version
+ARG version_io_server=$version
+ARG version_analytics_framework=$version
+ARG version_server=$version
+ARG version_terminal=$version
 ARG devel=no
 ARG branch=master
 ARG branch_primitives=$branch
@@ -84,7 +89,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 USER root
 
 RUN if [ "$devel" != "yes" ] ; then \
-	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v$version/ophidia-primitives_$version*.deb && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v${version_primitives}/ophidia-primitives_${version_primitives}-0_amd64.deb && \
 	apt install -y ophidia-primitives_*.deb && apt autoremove -y && apt clean -y &&\
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	rm -rf /repo/* ; fi
@@ -181,7 +186,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 USER root
 
 RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
-	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-io-server/releases/download/v$version/ophidia-io-server_$version*.deb && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-io-server/releases/download/v${version_io_server}/ophidia-io-server_${version_io_server}-0_amd64.deb && \
 	apt install -y ophidia-io-server_*.deb && apt autoremove -y && apt clean -y && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	sed -i "s/127.0.0.1/0.0.0.0/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf && \
@@ -227,7 +232,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 USER root
 
 RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
-	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-analytics-framework/releases/download/v$version/ophidia-analytics-framework_$version*.deb && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-analytics-framework/releases/download/v${version_analytics_framework}/ophidia-analytics-framework_${version_analytics_framework}-0_amd64.deb && \
 	apt install -y ophidia-analytics-framework_*.deb && apt autoremove -y && apt clean -y && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
@@ -272,7 +277,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 USER root
 
 RUN if [ "$devel" != "yes" ] ; then \
-	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-server/releases/download/v$version/ophidia-server_$version*.deb && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-server/releases/download/v${version_server}/ophidia-server_${version_server}-0_amd64.deb && \
 	apt install -y ophidia-server_*.deb && apt autoremove -y && apt clean -y && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	touch /usr/local/ophidia/oph-server/log/server.log && \
@@ -342,7 +347,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 USER root
 
 RUN if [ "$devel" != "yes" ] ; then \
-	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-terminal/releases/download/v$version/ophidia-terminal_$version*.deb && \
+	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-terminal/releases/download/v${version_terminal}/ophidia-terminal_${version_terminal}-0_amd64.deb && \
 	apt install -y ophidia-terminal_*.deb && apt autoremove -y && apt clean -y && \
 	chown -R ophidia:ophidia /usr/local/ophidia && \
 	rm -rf /repo/*; fi
@@ -456,7 +461,8 @@ COPY server_scripts/stop_ioserver.sh /usr/local/ophidia/oph-server/etc/script/st
 COPY server_scripts/oph_ioserver.conf.template /usr/local/ophidia/oph-server/etc/script/oph_ioserver.conf.template
 COPY entrypoint.sh /
 
-RUN	echo "ENABLE_CLUSTER_DEPLOYMENT=yes\nENABLE_CLUSTER_INCREASE=yes" >> /usr/local/ophidia/oph-server/etc/server.conf
+RUN	echo "ENABLE_CLUSTER_DEPLOYMENT=yes" >> /usr/local/ophidia/oph-server/etc/server.conf
+RUN	echo "ENABLE_CLUSTER_INCREASE=yes" >> /usr/local/ophidia/oph-server/etc/server.conf
 
 EXPOSE 11732
 EXPOSE 8888
