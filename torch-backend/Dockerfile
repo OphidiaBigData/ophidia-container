@@ -7,7 +7,7 @@ ARG jupyter=no
 ARG python=no
 ARG main_partition=yes
 ARG ioservers=0
-ARG version=1.8.0
+ARG version=1.9.0
 ARG devel=no
 ARG branch=master
 ARG branch_primitives=$branch
@@ -387,6 +387,11 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	rm -rf $PYOPHIDIA_DIR/src && \
 	echo "export PATH=$PATH:$PYOPHIDIA_DIR/utils" >> ~/.bashrc ; fi
 
+ENV OPH_SERVER_HOST="127.0.0.1"
+ENV OPH_SERVER_PORT="11732"
+ENV OPH_USER="oph-test"
+ENV OPH_PASSWD="abcd"
+
 USER root
 
 #CDO
@@ -430,5 +435,8 @@ EXPOSE 65000
 ENV JUPYTER=$jupyter
 ENV PYTHON=$python
 ENV MAIN_PARTITION=$main_partition
+
+ARG frontend=yes
+ENV FRONTEND=$frontend
 
 ENTRYPOINT ["/entrypoint.sh"]

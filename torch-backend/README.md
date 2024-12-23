@@ -18,7 +18,7 @@ Add ```--build-arg jupyter=yes``` to the build command above to install and conf
 
 ## Optional: Image squash instruction:
 
-The following command can be used to reduce  (squash) the image size (around 40% smaller):
+The following command can be used to reduce (squash) the image size (around 40% smaller):
 
 ```
 $ pip install docker-squash 
@@ -114,7 +114,7 @@ ophidia:latest
 
 The ```DEPLOY=terminal_only``` option can be used to run only the Ophidia Terminal to be used with an existing Ophidia deployment.
 Additional arguments can also be specified for this case:
-- ```OPH_SERVER_HOST```: Ophidia Server IP Address (default: 172.17.0.3).
+- ```OPH_SERVER_HOST```: Ophidia Server IP Address (default: 172.17.0.2).
 - ```OPH_SERVER_PORT```: Ophidia Server port (default: 11732).
 - ```OPH_USER```: Ophidia user (default: oph-test).
 - ```OPH_PASSWD```: Ophidia password (default: abcd).
@@ -124,7 +124,7 @@ For example:
 ```
 $ docker run --rm -it -v NETCDF_FILES_HOST_PATH:CONTAINER_PATH \
 -e DEPLOY=terminal_only \
--e OPH_SERVER_HOST='172.17.0.3' \
+-e OPH_SERVER_HOST='172.17.0.2' \
 -e OPH_SERVER_PORT='11732' \
 -e OPH_USER='oph-test' \
 -e OPH_PASSWD='abcd' \

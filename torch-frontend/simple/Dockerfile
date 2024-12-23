@@ -25,6 +25,11 @@ RUN mkdir -p $PYOPHIDIA_DIR/src && \
 	rm -rf $PYOPHIDIA_DIR/src && \
 	echo "export PATH=$PATH:$PYOPHIDIA_DIR/utils" >> ~/.bashrc
 
+ENV OPH_SERVER_HOST="172.17.0.2"
+ENV OPH_SERVER_PORT="11732"
+ENV OPH_USER="oph-test"
+ENV OPH_PASSWD="abcd"
+
 WORKDIR $HOME
 
 CMD ["setup.sh", "start-notebook.sh"]

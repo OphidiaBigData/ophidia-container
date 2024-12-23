@@ -7,7 +7,7 @@ ARG jupyter=no
 ARG python=no
 ARG main_partition=yes
 ARG ioservers=0
-ARG version=1.8.0
+ARG version=1.9.0
 ARG devel=no
 ARG branch=master
 ARG branch_primitives=$branch
@@ -465,5 +465,8 @@ EXPOSE 65000
 ENV JUPYTER=$jupyter
 ENV PYTHON=$python
 ENV MAIN_PARTITION=$main_partition
+
+ARG frontend=yes
+ENV FRONTEND=$frontend
 
 ENTRYPOINT ["/entrypoint.sh"]

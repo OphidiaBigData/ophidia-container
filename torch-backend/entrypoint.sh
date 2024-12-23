@@ -2,12 +2,11 @@
 
 function finalize_deploy()
 {
-	export OPH_SERVER_HOST="127.0.0.1"
-	export OPH_SERVER_PORT="11732"
-	export OPH_USER="oph-test"
-	export OPH_PASSWD="abcd"
 	cd /usr/local/ophidia
-	if [[ $CLIENT_SERVICE == "jupyter" ]]
+	if [[ $CLIENT_SERVICE == "log" ]]
+	then
+		tail -f /usr/local/ophidia/oph-server/log/server.log
+	elif [[ $CLIENT_SERVICE == "jupyter" ]]
 	then
 		su -c ". ~/.bashrc; jupyter-lab --no-browser --notebook-dir=/usr/local/ophidia --port=$JUPYTER_PORT --ip=$HOSTNAME" -s /bin/bash jovyan
 	elif [[ $CLIENT_SERVICE == "python" ]]
@@ -18,7 +17,10 @@ function finalize_deploy()
 
 trap finalize_deploy EXIT
 
-if [ ${JUPYTER} == "yes" ]
+if [ ${FRONTEND} == "no" ]
+then
+	CLIENT_SERVICE="log"
+elif [ ${JUPYTER} == "yes" ]
 then
 	CLIENT_SERVICE=${DEPLOY:-'jupyter'}
 else

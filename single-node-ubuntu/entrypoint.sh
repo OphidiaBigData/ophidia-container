@@ -2,12 +2,11 @@
 
 function finalize_deploy()
 {
-	export OPH_SERVER_HOST="127.0.0.1"
-	export OPH_SERVER_PORT="11732"
-	export OPH_USER="oph-test"
-	export OPH_PASSWD="abcd"
 	cd /usr/local/ophidia
-	if [[ $CLIENT_SERVICE == "terminal" ]]
+	if [[ $CLIENT_SERVICE == "log" ]]
+	then
+		tail -f /usr/local/ophidia/oph-server/log/server.log
+	elif [[ $CLIENT_SERVICE == "terminal" ]]
 	then
 		su -c ". ~/.bashrc; /usr/local/ophidia/oph-terminal/bin/oph_term" ophidia
 	elif [[ $CLIENT_SERVICE == "terminal_only" ]]
@@ -24,7 +23,10 @@ function finalize_deploy()
 
 trap finalize_deploy EXIT
 
-if [ ${JUPYTER} == "yes" ]
+if [ ${FRONTEND} == "no" ]
+then
+	CLIENT_SERVICE="log"
+elif [ ${JUPYTER} == "yes" ]
 then
 	CLIENT_SERVICE=${DEPLOY:-'jupyter'}
 elif [ $PYTHON == "yes" ]
