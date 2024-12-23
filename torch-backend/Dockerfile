@@ -451,6 +451,8 @@ COPY server_scripts/stop_ioserver.sh $OPHIDIA_DIR/oph-server/etc/script/stop_ios
 COPY server_scripts/oph_ioserver.conf.template $OPHIDIA_DIR/oph-server/etc/script/oph_ioserver.conf.template
 COPY entrypoint.sh /
 
+RUN	sed -i "s:\$HOME:$HOME:" $OPHIDIA_DIR/oph-server/etc/script/oph_ioserver.conf.template
+
 RUN	echo "ENABLE_CLUSTER_DEPLOYMENT=yes" >> $OPHIDIA_DIR/oph-server/etc/server.conf
 RUN	echo "ENABLE_CLUSTER_INCREASE=yes" >> $OPHIDIA_DIR/oph-server/etc/server.conf
 
