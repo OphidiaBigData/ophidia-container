@@ -140,7 +140,7 @@ RUN	if [ "$s3" = "yes" ] ; then \
 	mkdir build && \
 	cd build && \
 	cmake /usr/local/ophidia/src/aws-sdk-cpp -DBUILD_ONLY=s3 -DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local/ophidia/extra && \
-	make -j -k -s > /dev/null 2>&1 && \
+	make -k -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /usr/local/ophidia/src ; fi
 
