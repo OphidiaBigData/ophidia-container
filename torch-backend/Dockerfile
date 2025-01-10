@@ -140,9 +140,12 @@ RUN	if [ "$s3" = "yes" ] ; then \
 	git submodule update --init --recursive && \
 	mkdir build && \
 	cd build && \
+	OLD_PATH=$PATH && \
+	PATH=${PATH#/opt/conda/bin} && \
 	cmake $OPHIDIA_DIR/src/aws-sdk-cpp -DBUILD_ONLY=s3 -DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=$OPHIDIA_DIR/extra && \
-	make -k -s > /dev/null 2>&1 && \
+	make -j -k -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
+	PATH=$OLD_PATH && \
 	rm -rf $OPHIDIA_DIR/src ; fi
 
 #NETCDF-MPICH
