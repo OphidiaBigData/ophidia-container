@@ -415,17 +415,22 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
 	cd PyOphidia/ && \
 	git checkout $branch_pyophidia && \
-	pip install . && \
-	cp -r PyOphidia/utils /usr/local/ophidia/ && \
+	python -m pip install ".[convert,cwl,prov,display]" && \
+	cp -r pyophidia/utils /usr/local/ophidia/ && \
 	cp -r examples /usr/local/ophidia/ && \
 	rm -f /usr/local/ophidia/examples/utils/tasks && \
-	cp -r PyOphidia/utils/tasks /usr/local/ophidia/examples/utils/ && \
+	cp -r pyophidia/utils/tasks /usr/local/ophidia/examples/utils/ && \
 	rm -rf /usr/local/ophidia/src ; fi
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	echo "export PATH=$PATH:/usr/local/ophidia/utils" >> ~/.bashrc && \
 	echo "source activate /usr/local/ophidia/env" >> ~/.bashrc && \
 	conda clean -y --all ; fi
+
+ENV OPH_SERVER_HOST="172.17.0.2"
+ENV OPH_SERVER_PORT="11732"
+ENV OPH_USER="oph-test"
+ENV OPH_PASSWD="abcd"
 
 USER root
 

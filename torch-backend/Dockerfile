@@ -407,7 +407,7 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
 	cd PyOphidia/ && \
 	git checkout $branch_pyophidia && \
-	pip install . && \
+	python -m pip install ".[convert,cwl,prov,display]" && \
 	cp -r PyOphidia/utils $PYOPHIDIA_DIR/ && \
 	cp -r examples $PYOPHIDIA_DIR/ && \
 	rm -f $PYOPHIDIA_DIR/examples/utils/tasks && \

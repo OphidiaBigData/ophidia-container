@@ -143,7 +143,7 @@ RUN mkdir -p $PYOPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
 	cd PyOphidia/ && \
 	git checkout release && \
-	pip install . && \
+	python -m pip install ".[convert,cwl,prov,display]" && \
 	cp -r PyOphidia/utils $PYOPHIDIA_DIR/ && \
 	cp -r examples $PYOPHIDIA_DIR/ && \
 	rm -f $PYOPHIDIA_DIR/examples/utils/tasks && \
