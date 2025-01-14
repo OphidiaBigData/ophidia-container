@@ -18,10 +18,10 @@ RUN mkdir -p $PYOPHIDIA_DIR/src && \
 	cd PyOphidia/ && \
 	git checkout release && \
 	python -m pip install ".[convert,cwl,prov,display]" && \
-	cp -r PyOphidia/utils $PYOPHIDIA_DIR/ && \
+	cp -r pyophidia/utils $PYOPHIDIA_DIR/ && \
 	cp -r examples $PYOPHIDIA_DIR/ && \
 	rm -f $PYOPHIDIA_DIR/examples/utils/tasks && \
-	cp -r PyOphidia/utils/tasks $PYOPHIDIA_DIR/examples/utils/ && \
+	cp -r pyophidia/utils/tasks $PYOPHIDIA_DIR/examples/utils/ && \
 	rm -rf $PYOPHIDIA_DIR/src && \
 	echo "export PATH=$PATH:$PYOPHIDIA_DIR/utils" >> ~/.bashrc
 
