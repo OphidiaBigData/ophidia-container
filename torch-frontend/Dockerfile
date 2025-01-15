@@ -148,8 +148,9 @@ RUN mkdir -p $PYOPHIDIA_DIR/src && \
 	cp -r examples $PYOPHIDIA_DIR/ && \
 	rm -f $PYOPHIDIA_DIR/examples/utils/tasks && \
 	cp -r pyophidia/utils/tasks $PYOPHIDIA_DIR/examples/utils/ && \
-	rm -rf $PYOPHIDIA_DIR/src && \
-	echo "export PATH=$PATH:$PYOPHIDIA_DIR/utils" >> ~/.bashrc
+	rm -rf $PYOPHIDIA_DIR/src
+
+ENV PATH=$PATH:$PYOPHIDIA_DIR/utils
 
 ENV OPH_SERVER_HOST="172.17.0.2"
 ENV OPH_SERVER_PORT="11732"
