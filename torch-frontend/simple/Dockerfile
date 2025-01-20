@@ -1,4 +1,4 @@
-FROM ghcr.io/intertwin-eu/itwinai-dev:jlab-0.2.2.dev-cmcc-v6
+FROM ghcr.io/intertwin-eu/itwinai-dev:5c1b6fc0afb6d657cf425e057b6e7da4e6a18aa8-torch-jupyter-slim
 
 USER root
 
