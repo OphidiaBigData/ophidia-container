@@ -47,6 +47,7 @@ fi
 
 [ -d '/var/run/slurm' ] && SLURM_BUILD=true || SLURM_BUILD=false
 
+rm -f /var/run/mysqld/*
 service mysql start
 while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done
 MYSQL_PWD="abcd" mysql -u root -e "SET GLOBAL sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));"
