@@ -420,6 +420,7 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	cp -r examples /usr/local/ophidia/ && \
 	rm -f /usr/local/ophidia/examples/utils/tasks && \
 	cp -r pyophidia/utils/tasks /usr/local/ophidia/examples/utils/ && \
+	mkdir -p /usr/local/ophidia/work && \
 	rm -rf /usr/local/ophidia/src ; fi
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
