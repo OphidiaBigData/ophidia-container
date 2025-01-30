@@ -16,3 +16,7 @@ cwltool
 zarr
 haversine==2.9.0
 torch_geometric==2.6.1
+cftime
+imageio
+netcdf4
+dask

@@ -157,6 +157,8 @@ ENV OPH_SERVER_PORT="11732"
 ENV OPH_USER="oph-test"
 ENV OPH_PASSWD="abcd"
 
+RUN	pip install jupyterhub==3.0.0
+
 #############################
 ###        itwinai        ###
 #############################
