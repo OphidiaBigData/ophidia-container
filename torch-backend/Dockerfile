@@ -35,7 +35,8 @@ RUN cd / && \
 	apt install -y mysql-server && \
 	apt install -y mysql-client libmysqlclient-dev && \
 	apt autoremove -y && apt clean -y && \
-	chmod +x /var/run/mysqld
+	chmod +x /var/run/mysqld && \
+	usermod -d /var/lib/mysql/ mysql
 
 RUN apt install -y autoconf autotools-dev gcc make git libltdl-dev curl && apt autoremove -y && apt clean -y
 
