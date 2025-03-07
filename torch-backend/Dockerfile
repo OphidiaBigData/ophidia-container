@@ -156,7 +156,7 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	git clone https://github.com/Unidata/netcdf-c.git && \
 	cd netcdf-c* && \
 	git checkout tags/v4.9.3 && \
-	if [ "$s3" = "yes" ] ; then enable_s3="--enable-s3" ; library_s3="-laws-cpp-sdk-s3" ; fi && \
+	if [ "$s3" = "yes" ] ; then enable_s3="--enable-s3" ; library_s3="-laws-cpp-sdk-s3 " ; fi && \
 	CC=/usr/bin/mpicc CPP=/usr/bin/mpicxx CFLAGS="-I$OPHIDIA_DIR/extra/include/" CPPFLAGS="-I$OPHIDIA_DIR/extra/include/" LDFLAGS="-L$OPHIDIA_DIR/extra/lib/" LIBS="-ldl $library_s3" H5DIR=$OPHIDIA_DIR/extra/ ./configure --prefix=$OPHIDIA_DIR/extra --enable-netcdf4 --with-plugin-dir=$OPHIDIA_DIR/extra/lib/plugins $enable_s3 > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
