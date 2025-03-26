@@ -1,4 +1,4 @@
-FROM ghcr.io/intertwin-eu/itwinai:torch-slim-latest
+FROM ghcr.io/intertwin-eu/itwinai:jlab-slim-0.3.0-torch2.4-jammy
 
 USER root
 
