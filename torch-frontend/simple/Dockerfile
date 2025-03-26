@@ -1,4 +1,4 @@
-FROM ghcr.io/intertwin-eu/itwinai-dev:5c1b6fc0afb6d657cf425e057b6e7da4e6a18aa8-torch-jupyter-slim
+FROM ghcr.io/intertwin-eu/itwinai:torch-slim-latest
 
 USER root
 
@@ -17,7 +17,7 @@ RUN mkdir -p $PYOPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
 	cd PyOphidia/ && \
 	git checkout release && \
-	python -m pip install ".[convert,cwl,prov,display]" && \
+	python -m pip install ".[convert,prov,display]" && \
 	cp -r pyophidia/utils $PYOPHIDIA_DIR/ && \
 	cp -r examples $PYOPHIDIA_DIR/ && \
 	rm -f $PYOPHIDIA_DIR/examples/utils/tasks && \
