@@ -1,4 +1,4 @@
-FROM ghcr.io/intertwin-eu/itwinai:jlab-slim-0.3.0-torch2.4-jammy
+FROM ghcr.io/intertwin-eu/itwinai-dev:jlab-slim-0.3.1-torch2.4-jammy
 
 USER root
 
@@ -30,8 +30,6 @@ ENV OPH_SERVER_HOST="172.17.0.2"
 ENV OPH_SERVER_PORT="11732"
 ENV OPH_USER="oph-test"
 ENV OPH_PASSWD="abcd"
-
-RUN	pip install jupyterhub==3.0.0
 
 WORKDIR $HOME
 
