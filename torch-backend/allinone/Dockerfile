@@ -378,7 +378,7 @@ ENV OPH_TERM_FORMAT=extended_compact
 
 USER root
 
-ENV PATH=$OPHIDIA_DIR/extra/bin:$PATH
+ENV PATH=$OPHIDIA_DIR/oph-cluster/oph-io-server/bin:$OPHIDIA_DIR/oph-cluster/oph-analytics-framework/bin:$OPHIDIA_DIR/oph-server/bin:$OPHIDIA_DIR/extra/bin:$OPHIDIA_DIR/oph-terminal/bin:$PATH
 ENV LD_LIBRARY_PATH=$OPHIDIA_DIR/extra/lib:$HDF5_PLUGIN_PATH:$LD_LIBRARY_PATH
 
 COPY server_scripts/oph_submit.sh $OPHIDIA_DIR/extra/etc/
@@ -388,7 +388,7 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 
 USER $NB_UID
 
-ENV PATH=$OPHIDIA_DIR/extra/bin:$PATH
+ENV PATH=$OPHIDIA_DIR/oph-cluster/oph-io-server/bin:$OPHIDIA_DIR/oph-cluster/oph-analytics-framework/bin:$OPHIDIA_DIR/oph-server/bin:$OPHIDIA_DIR/extra/bin:$OPHIDIA_DIR/oph-terminal/bin:$PATH
 
 ENV PYOPHIDIA_DIR=$HOME/pyophidia
 RUN mkdir -p $PYOPHIDIA_DIR
@@ -397,8 +397,8 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	pip install --no-cache-dir -r $PYOPHIDIA_DIR/requirements.txt ; fi
 RUN rm -rf $PYOPHIDIA_DIR/requirements.txt
 
-ENV PATH=$OPHIDIA_DIR/env/bin:$PATH:$OPHIDIA_DIR/proj/bin:$OPHIDIA_DIR/.local/bin
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$OPHIDIA_DIR/proj/lib:$OPHIDIA_DIR/.local/lib
+ENV PATH=$OPHIDIA_DIR/env/bin:$OPHIDIA_DIR/proj/bin:$OPHIDIA_DIR/.local/bin:$PATH
+ENV LD_LIBRARY_PATH=$OPHIDIA_DIR/proj/lib:$OPHIDIA_DIR/.local/lib:$LD_LIBRARY_PATH
 
 RUN echo "export PATH=$PATH" >> ~/.bashrc && \
 	echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> ~/.bashrc && \
@@ -425,6 +425,10 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	cp -r pyophidia/utils/tasks $PYOPHIDIA_DIR/examples/utils/ && \
 	rm -rf $PYOPHIDIA_DIR/src && \
 	echo "export PATH=$PATH:$PYOPHIDIA_DIR/utils" >> ~/.bashrc ; fi
+
+# The following task has been added to support jovyan-based frontend
+RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+	mkdir -p /home/jovyan && ln -s $PYOPHIDIA_DIR /home/jovyan/pyophidia ; fi
 
 ENV OPH_SERVER_HOST="127.0.0.1"
 ENV OPH_SERVER_PORT="11732"
