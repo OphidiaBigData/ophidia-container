@@ -461,6 +461,9 @@ RUN	if [ "$valgrind" = "yes" ] ; then \
 	apt install -y valgrind && \
 	apt autoremove -y && apt clean -y ; fi
 
+RUN	apt install -y bc && \
+	apt autoremove -y && apt clean -y
+
 COPY ssl-params.conf /etc/apache2/conf-available/
 COPY server_scripts/oph_submit.sh $OPHIDIA_DIR/oph-server/etc/script/oph_submit.sh
 COPY server_scripts/oph_cancel.sh $OPHIDIA_DIR/oph-server/etc/script/oph_cancel.sh
