@@ -426,8 +426,8 @@ RUN	if [ "$cdo" = "yes" ] ; then \
 	tar -xzf cdo-2.4.4.tar.gz && \
 	cd cdo-2.4.4 && \
 	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	PYTHON="/usr/bin/python3" CFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L$OPHIDIA_DIR/extra/lib" ./configure --prefix=$OPHIDIA_DIR/extra --with-hdf5=yes --with-netcdf=yes > /dev/null 2>&1 ; else \
-	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --prefix=$OPHIDIA_DIR/extra --with-hdf5=yes --with-netcdf=yes > /dev/null 2>&1 ; fi && \
+	PYTHON="/usr/bin/python3" CFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L$OPHIDIA_DIR/extra/lib" ./configure --prefix=$OPHIDIA_DIR/extra --with-hdf5=yes --with-netcdf=yes --enable-netcdf4 > /dev/null 2>&1 ; else \
+	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --prefix=$OPHIDIA_DIR/extra --with-hdf5=yes --with-netcdf=yes --enable-netcdf4 > /dev/null 2>&1 ; fi && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* && \
