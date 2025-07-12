@@ -343,18 +343,17 @@ RUN apt install -y apache2-bin php libapache2-mod-php && \
 
 #CDO
 RUN	if [ "$cdo" = "yes" ] ; then \
-#	cd /repo && \
-#	curl -s -O -k https://code.mpimet.mpg.de/attachments/download/29649/cdo-2.4.4.tar.gz && \
-#	tar -xzf cdo-2.4.4.tar.gz && \
-#	cd cdo-2.4.4 && \
-#	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-#	PYTHON="/usr/bin/python3" CFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L$OPHIDIA_DIR/extra/lib" ./configure --prefix=$OPHIDIA_DIR/extra --with-hdf5=yes --with-netcdf=yes --enable-netcdf4 --enable-zlib > /dev/null 2>&1 ; else \
-#	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --prefix=$OPHIDIA_DIR/extra --with-hdf5=yes --with-netcdf=yes --enable-netcdf4 --enable-zlib > /dev/null 2>&1 ; fi && \
-#	make -s > /dev/null 2>&1 && \
-#	make install -s > /dev/null 2>&1 && \
-#	rm -rf /repo/* && \
-#	echo "CDO_PATH=$OPHIDIA_DIR/extra/bin" >> $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
-	echo "CDO_PATH=/usr/bin" >> $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
+	cd /repo && \
+	curl -s -O -k https://code.mpimet.mpg.de/attachments/download/29649/cdo-2.4.4.tar.gz && \
+	tar -xzf cdo-2.4.4.tar.gz && \
+	cd cdo-2.4.4 && \
+	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
+	PYTHON="/usr/bin/python3" CFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L$OPHIDIA_DIR/extra/lib" ./configure --with-hdf5=$OPHIDIA_DIR/extra/ --with-netcdf=$OPHIDIA_DIR/extra/ --enable-netcdf4 --enable-zlib > /dev/null 2>&1 ; else \
+	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --with-hdf5=/usr/ --with-netcdf=/usr/ --enable-netcdf4 --enable-zlib > /dev/null 2>&1 ; fi && \
+	make -s > /dev/null 2>&1 && \
+	make install -s > /dev/null 2>&1 && \
+	rm -rf /repo/* && \
+	echo "CDO_PATH=/usr/local/bin" >> $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
 
 #NCO
 RUN	if [ "$nco" = "yes" ] ; then \
@@ -469,7 +468,7 @@ RUN	if [ "$valgrind" = "yes" ] ; then \
 	apt autoremove -y && apt clean -y ; fi
 
 #Other packages
-RUN	apt install -y bc cdo && \
+RUN	apt install -y bc && \
 	apt autoremove -y && apt clean -y
 
 COPY ssl-params.conf /etc/apache2/conf-available/
