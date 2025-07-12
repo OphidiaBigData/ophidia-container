@@ -404,7 +404,7 @@ ENV LD_LIBRARY_PATH=$OPHIDIA_DIR/extra/lib:$HDF5_PLUGIN_PATH:$LD_LIBRARY_PATH
 COPY server_scripts/oph_submit.sh $OPHIDIA_DIR/extra/etc/
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    apt install -y graphviz && apt autoremove -y && apt clean -y ; fi
+    apt install -y graphviz nodejs && apt autoremove -y && apt clean -y ; fi
 
 USER $NB_UID
 

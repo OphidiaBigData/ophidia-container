@@ -2,7 +2,7 @@ FROM  ghcr.io/intertwin-eu/itwinai-dev:jlab-test-1
 
 USER root
 
-RUN apt-get update && apt-get install -y graphviz && apt-get clean -y
+RUN apt-get update && apt-get install -y graphviz nodejs && apt-get clean -y
 
 USER $NB_UID
 

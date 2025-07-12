@@ -375,7 +375,7 @@ ENV LD_LIBRARY_PATH=/usr/local/ophidia/extra/lib:$HDF5_PLUGIN_PATH:$LD_LIBRARY_P
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/extra/etc/
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    apt install -y graphviz && apt autoremove -y && apt clean -y ; fi
+    apt install -y graphviz nodejs && apt autoremove -y && apt clean -y ; fi
 
 ENV CONDA_DIR=/opt/conda
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
