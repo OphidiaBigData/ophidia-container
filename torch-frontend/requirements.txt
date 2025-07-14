@@ -19,3 +19,4 @@ cftime
 imageio
 netcdf4
 dask
+zarr
