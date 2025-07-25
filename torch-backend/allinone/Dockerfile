@@ -183,6 +183,10 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia I/O Server" && \
 	apt install -y bison flex libfl-dev libbison-dev && apt autoremove -y && apt clean -y ; fi
 
+# Logging IO Server
+RUN	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
+	mkdir -p /home/jovyan/log/ioserver && mkdir -p /root/.ophidia && ln -s /home/jovyan/log/ioserver /root/.ophidia/data1 ; fi
+
 USER $NB_UID
 
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
@@ -231,6 +235,10 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 
 USER $NB_UID
 
+# Logging Analytics Framework
+RUN	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
+	mkdir -p /home/jovyan/log/framework && mkdir -p $OPHIDIA_DIR/oph-cluster/oph-analytics-framework && ln -s /home/jovyan/log/framework $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/log ; fi
+
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	mkdir -p $OPHIDIA_DIR/src && \
 	cd $OPHIDIA_DIR/src && \
@@ -272,6 +280,10 @@ RUN if [ "$devel" = "yes" ] ; then \
 	chown -R $NB_UID:$NB_UID /var/www/html/ophidia ; fi
 
 USER $NB_UID
+
+# Logging Server
+RUN	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
+	mkdir -p /home/jovyan/log/server && mkdir -p $OPHIDIA_DIR/oph-server && ln -s /home/jovyan/log/server $OPHIDIA_DIR/oph-server/log ; fi
 
 RUN if [ "$devel" = "yes" ] ; then \
 	mkdir -p $OPHIDIA_DIR/src && \
@@ -449,6 +461,12 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 # The following task has been added to support jovyan-based frontend
 RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	mkdir -p /home/jovyan && ln -s $PYOPHIDIA_DIR /home/jovyan/pyophidia ; fi
+
+# MLFires
+RUN	cd / && \
+	git clone https://github.com/CMCC-Foundation/ML4Fires.git && \
+	mkdir -p /home/jovyan && ln -s /ML4Fires /home/jovyan/ML4Fires && \
+	echo "export PATH=$PATH:/ML4Fires" >> ~/.bashrc
 
 ENV OPH_SERVER_HOST="127.0.0.1"
 ENV OPH_SERVER_PORT="11732"

@@ -2,7 +2,7 @@ FROM  ghcr.io/intertwin-eu/itwinai-dev:jlab-test-1
 
 USER root
 
-RUN apt-get update && apt-get install -y graphviz nodejs && apt-get clean -y
+RUN apt-get update && apt-get install -y graphviz nodejs netcdf-bin cdo && apt-get clean -y
 
 USER $NB_UID
 
@@ -14,7 +14,7 @@ RUN rm -rf $PYOPHIDIA_DIR/requirements.txt
 
 RUN mkdir -p $PYOPHIDIA_DIR/src && \
 	cd $PYOPHIDIA_DIR/src && \
-	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
+	git        clone https://github.com/OphidiaBigData/PyOphidia.git && \
 	cd PyOphidia/ && \
 	git checkout release && \
 	python -m pip install ".[convert,cwl,prov,display]" && \
