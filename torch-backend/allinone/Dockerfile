@@ -468,7 +468,7 @@ WORKDIR $HOME
 # Logging IO Server
 RUN	if [ "$logging" = "yes" ] ; then \
 	rm -rf $OPHIDIA_DIR/oph-cluster/oph-io-server/data1/log && \
-	ln -s $logging_dir/ioserver $OPHIDIA_DIR/oph-cluster/oph-io-server/data1/log ; fi
+	ln -s $logging_dir/ioserver0 $OPHIDIA_DIR/oph-cluster/oph-io-server/data1/log ; fi
 
 # Logging Analytics Framework
 RUN	if [ "$logging" = "yes" ] ; then \
@@ -484,8 +484,8 @@ USER root
 
 # Logging IO Server
 RUN	if [ "$logging" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	mkdir -p /root/.ophidia/data1/log && \
-	ln -s $logging_dir/ioserver.log /root/.ophidia/data1/log/server.log ; fi
+	mkdir -p /root/.ophidia && \
+	ln -s $logging_dir/ioserver1 /root/.ophidia/data1 ; fi
 
 RUN	/usr/sbin/start_mysql && \
 	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \

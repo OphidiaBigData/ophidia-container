@@ -42,6 +42,7 @@ echo "${FRAMEWORK_PATH}/bin/oph_analytics_framework \"${submissionstring}\"" >> 
 chmod +x ${SCRIPT_FILE}
 
 mpiexec.hydra -n ${ncores} -outfile-pattern ${log} -errfile-pattern ${log} ${SCRIPT_FILE}
+chmod +r ${log}
 
 if [ $? -ne 0 ]; then
 	echo "Unable to submit ${SCRIPT_FILE}"
