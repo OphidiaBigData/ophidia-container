@@ -28,6 +28,8 @@ ARG cdo=no
 ARG nco=no
 ARG valgrind=no
 ARG debug_level=0
+ARG logging=no
+ARG logging_dir=/home/jovyan/work/log
 
 USER root
 
@@ -183,10 +185,6 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia I/O Server" && \
 	apt install -y bison flex libfl-dev libbison-dev && apt autoremove -y && apt clean -y ; fi
 
-# Logging IO Server
-RUN	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	mkdir -p /home/jovyan/log/ioserver && mkdir -p /root/.ophidia && ln -s /home/jovyan/log/ioserver /root/.ophidia/data1 ; fi
-
 USER $NB_UID
 
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
@@ -235,10 +233,6 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 
 USER $NB_UID
 
-# Logging Analytics Framework
-RUN	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	mkdir -p /home/jovyan/log/framework && mkdir -p $OPHIDIA_DIR/oph-cluster/oph-analytics-framework && ln -s /home/jovyan/log/framework $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/log ; fi
-
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	mkdir -p $OPHIDIA_DIR/src && \
 	cd $OPHIDIA_DIR/src && \
@@ -280,10 +274,6 @@ RUN if [ "$devel" = "yes" ] ; then \
 	chown -R $NB_UID:$NB_UID /var/www/html/ophidia ; fi
 
 USER $NB_UID
-
-# Logging Server
-RUN	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	mkdir -p /home/jovyan/log/server && mkdir -p $OPHIDIA_DIR/oph-server && ln -s /home/jovyan/log/server $OPHIDIA_DIR/oph-server/log ; fi
 
 RUN if [ "$devel" = "yes" ] ; then \
 	mkdir -p $OPHIDIA_DIR/src && \
@@ -475,7 +465,27 @@ ENV OPH_PASSWD="abcd"
 
 WORKDIR $HOME
 
+# Logging IO Server
+RUN	if [ "$logging" = "yes" ] ; then \
+	rm -rf $OPHIDIA_DIR/oph-cluster/oph-io-server/data1/log && \
+	ln -s $logging_dir/ioserver $OPHIDIA_DIR/oph-cluster/oph-io-server/data1/log ; fi
+
+# Logging Analytics Framework
+RUN	if [ "$logging" = "yes" ] ; then \
+	rm -rf $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/log && \
+	ln -s $logging_dir/framework $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/log ; fi
+
+# Logging Server
+RUN	if [ "$logging" = "yes" ] ; then \
+	rm -rf $OPHIDIA_DIR/oph-server/log && \
+	ln -s $logging_dir/server $OPHIDIA_DIR/oph-server/log ; fi
+
 USER root
+
+# Logging IO Server
+RUN	if [ "$logging" = "yes" ] || [ "$devel" = "yes" ] ; then \
+	mkdir -p /root/.ophidia/data1/log && \
+	ln -s $logging_dir/ioserver.log /root/.ophidia/data1/log/server.log ; fi
 
 RUN	/usr/sbin/start_mysql && \
 	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \

@@ -14,7 +14,7 @@ RUN rm -rf $PYOPHIDIA_DIR/requirements.txt
 
 RUN mkdir -p $PYOPHIDIA_DIR/src && \
 	cd $PYOPHIDIA_DIR/src && \
-	git        clone https://github.com/OphidiaBigData/PyOphidia.git && \
+	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
 	cd PyOphidia/ && \
 	git checkout release && \
 	python -m pip install ".[convert,cwl,prov,display]" && \
