@@ -5,6 +5,11 @@ function finalize_deploy()
 	cd /usr/local/ophidia
 	if [[ $CLIENT_SERVICE == "log" ]]
 	then
+		if [ ! -f "/usr/local/ophidia/oph-server/log/server.log" ]; then
+			rm -rf /usr/local/ophidia/oph-server/log
+			mkdir -p /usr/local/ophidia/oph-server/log
+			touch /usr/local/ophidia/oph-server/log/server.log
+		fi
 		tail -f /usr/local/ophidia/oph-server/log/server.log
 	elif [[ $CLIENT_SERVICE == "terminal" ]]
 	then
