@@ -452,11 +452,14 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	mkdir -p /home/jovyan && ln -s $PYOPHIDIA_DIR /home/jovyan/pyophidia ; fi
 
-# MLFires
+# ML4Fires
 RUN	cd / && \
 	git clone https://github.com/CMCC-Foundation/ML4Fires.git && \
+	cd ML4Fires && \
+	git checkout feature_26 && \
 	mkdir -p /home/jovyan && ln -s /ML4Fires /home/jovyan/ML4Fires && \
-	echo "export PATH=$PATH:/ML4Fires" >> ~/.bashrc
+	echo "export PATH=$PATH:/ML4Fires" >> ~/.bashrc && \
+	pip install toml munch tqdm
 
 ENV OPH_SERVER_HOST="127.0.0.1"
 ENV OPH_SERVER_PORT="11732"
