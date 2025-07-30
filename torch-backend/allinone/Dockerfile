@@ -455,11 +455,13 @@ RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 # ML4Fires
 RUN	cd / && \
 	git clone https://github.com/CMCC-Foundation/ML4Fires.git && \
-	cd ML4Fires && \
+	cd /ML4Fires && \
 	git checkout feature_26 && \
-	mkdir -p /home/jovyan && ln -s /ML4Fires /home/jovyan/ML4Fires && \
 	echo "export PATH=$PATH:/ML4Fires" >> ~/.bashrc && \
-	pip install toml munch tqdm
+	pip install toml munch tqdm timm && \
+	rm -f /ML4Fires/config/credentials.toml && \
+	ln -s /home/jovyan/work/credentials.toml /ML4Fires/config/credentials.toml && \
+	sed -i 's/EXPERIMENT_NAME = "ML4Fires_Experiment"/EXPERIMENT_NAME = "ML4Fires_Experiment_Pourya"/g' /ML4Fires/config/configuration.toml
 
 ENV OPH_SERVER_HOST="127.0.0.1"
 ENV OPH_SERVER_PORT="11732"
@@ -498,7 +500,7 @@ RUN	if [ "$valgrind" = "yes" ] ; then \
 	apt install -y valgrind && \
 	apt autoremove -y && apt clean -y ; fi
 
-#Other packages
+# Other packages
 RUN	apt install -y bc && \
 	apt autoremove -y && apt clean -y
 
