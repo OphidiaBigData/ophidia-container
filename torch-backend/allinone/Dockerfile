@@ -452,16 +452,22 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	mkdir -p /home/jovyan && ln -s $PYOPHIDIA_DIR /home/jovyan/pyophidia ; fi
 
-# ML4Fires
-RUN	cd / && \
-	git clone https://github.com/CMCC-Foundation/ML4Fires.git && \
-	cd /ML4Fires && \
-	git checkout feature_26 && \
-	echo "export PATH=$PATH:/ML4Fires" >> ~/.bashrc && \
-	pip install toml munch tqdm timm && \
-	rm -f /ML4Fires/config/credentials.toml && \
-	ln -s /home/jovyan/work/credentials.toml /ML4Fires/config/credentials.toml && \
-	sed -i 's/EXPERIMENT_NAME = "ML4Fires_Experiment"/EXPERIMENT_NAME = "ML4Fires_Experiment_Pourya"/g' /ML4Fires/config/configuration.toml
+# ML4Fires on the backend
+#RUN	cd / && \
+#	git clone https://github.com/CMCC-Foundation/ML4Fires.git && \
+#	cd /ML4Fires && \
+#	git checkout feature_26 && \
+#	echo "export PATH=$PATH:/ML4Fires" >> ~/.bashrc && \
+#	pip install toml munch tqdm timm && \
+#	rm -f /ML4Fires/config/credentials.toml && \
+#	ln -s /home/jovyan/work/credentials.toml /ML4Fires/config/credentials.toml && \
+#	mkdir -p /ML4Fires/MLFLOW && ln -s /home/jovyan/work/fires/model /ML4Fires/MLFLOW/model && \
+#	sed -i 's/EXPERIMENT_NAME = "ML4Fires_Experiment"/EXPERIMENT_NAME = "ML4Fires_Experiment_Pourya"/' /ML4Fires/config/configuration.toml && \
+#	sed -i 's/torch.load(path)/torch.load(path,map_location=torch.device('\''cpu'\''))/' /ML4Fires/Fires/_utilities/utils_mlflow.py
+
+# ML4Fires on shared space
+RUN	echo "export PATH=$PATH:/home/jovyan/work/ML4Fires" >> ~/.bashrc && \
+	pip install toml munch tqdm timm
 
 ENV OPH_SERVER_HOST="127.0.0.1"
 ENV OPH_SERVER_PORT="11732"
