@@ -389,6 +389,8 @@ USER ophidia
 ENV PATH=$CONDA_DIR/bin:$PATH
 ADD environment.yml /usr/local/ophidia/environment.yml
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+	conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+	conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
     conda env create -f /usr/local/ophidia/environment.yml -p /usr/local/ophidia/env ; fi
 RUN rm -r /usr/local/ophidia/environment.yml
 
