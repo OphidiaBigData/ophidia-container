@@ -83,7 +83,7 @@ RUN apt install -y libfl-dev flex bison libmatheval-dev libmatheval1 openssl wge
 
 RUN if [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia Primitives" && \
-	apt install -y gsl-bin libgslcblas0 libgsl-dev autoconf automake libtool\* pkg-config libz-dev && apt autoremove -y && apt clean -y ; fi
+	apt install -y gsl-bin libgslcblas0 libgsl-dev guile-2.2-dev autoconf automake libtool\* pkg-config libz-dev && apt autoremove -y && apt clean -y ; fi
 
 RUN if [ "$s3" = "yes" ] ; then \
 	apt install -y cmake libcurl4-openssl-dev && apt autoremove -y && apt clean -y ; fi
@@ -91,29 +91,26 @@ RUN if [ "$s3" = "yes" ] ; then \
 USER $NB_UID
 
 ENV OPHIDIA_DIR=/usr/local/ophidia
-ENV LIBMATHEVAL=/usr/lib/$(uname -m)-linux-gnu
 
 #OPHIDIA PRIMITIVES
 RUN if [ "$devel" = "yes" ] ; then \
 	mkdir $OPHIDIA_DIR/src && \
 	cd $OPHIDIA_DIR/src && \
-	git clone https://github.com/OphidiaBigData/ophidia-primitives ; fi
-
-RUN	if [ "$libmatheval_extensions" = "yes" ] ; then \
-	cd repo/ && curl -s -O -k https://ftp.gnu.org/gnu/libmatheval/libmatheval-1.1.11.tar.gz && \
+	git clone https://github.com/OphidiaBigData/ophidia-primitives && \
+	cd $OPHIDIA_DIR/src/ophidia-primitives && \
+	git checkout $branch_primitives && \
+	if [ "$libmatheval_extensions" = "yes" ] ; then \
+	cd /repo && curl -s -O -k https://ftp.gnu.org/gnu/libmatheval/libmatheval-1.1.11.tar.gz && \
 	tar -xzf libmatheval-1.1.11.tar.gz && \
 	cd libmatheval-1.1.11 && \
-	patch -p0 < $OPHIDIA_DIR/src/ophidia-primitives/etc/libmatheval.patch && \
+	patch -p0 < $OPHIDIA_DIR/src/ophidia-primitives/import_plugin/libmatheval.patch && \
 	./configure --prefix=$OPHIDIA_DIR/extra && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* && \
-	export LIBMATHEVAL=$OPHIDIA_DIR/extra ; fi
-
-#OPHIDIA PRIMITIVES
-RUN if [ "$devel" = "yes" ] ; then \
+	export LIBMATHEVAL=$OPHIDIA_DIR/extra ; else \
+	export LIBMATHEVAL=/usr/lib/$(uname -m)-linux-gnu ; fi && \
 	cd $OPHIDIA_DIR/src/ophidia-primitives && \
-	git checkout $branch_primitives && \
 	./bootstrap > /dev/null 2>&1 && \
 	./configure --prefix=$OPHIDIA_DIR/oph-cluster/oph-primitives --with-matheval-path=$LIBMATHEVAL > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
@@ -121,6 +118,8 @@ RUN if [ "$devel" = "yes" ] ; then \
 	rm -rf $OPHIDIA_DIR/src ; fi
 
 USER root
+
+ENV LD_LIBRARY_PATH=$OPHIDIA_DIR/extra/lib:$LD_LIBRARY_PATH
 
 RUN if [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v${version_primitives}/ophidia-primitives_${version_primitives}-0_amd64.deb && \
@@ -417,7 +416,7 @@ ENV OPH_TERM_FORMAT=extended_compact
 USER root
 
 ENV PATH=$OPHIDIA_DIR/oph-cluster/oph-io-server/bin:$OPHIDIA_DIR/oph-cluster/oph-analytics-framework/bin:$OPHIDIA_DIR/oph-server/bin:$OPHIDIA_DIR/extra/bin:$OPHIDIA_DIR/oph-terminal/bin:$PATH
-ENV LD_LIBRARY_PATH=$OPHIDIA_DIR/extra/lib:$HDF5_PLUGIN_PATH:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=$HDF5_PLUGIN_PATH:$LD_LIBRARY_PATH
 
 COPY server_scripts/oph_submit.sh $OPHIDIA_DIR/extra/etc/
 
