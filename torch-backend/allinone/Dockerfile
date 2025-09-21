@@ -30,6 +30,7 @@ ARG valgrind=no
 ARG debug_level=0
 ARG logging=no
 ARG logging_dir=/home/jovyan/work/log
+ARG libmatheval_extensions=no
 
 USER root
 
@@ -90,16 +91,31 @@ RUN if [ "$s3" = "yes" ] ; then \
 USER $NB_UID
 
 ENV OPHIDIA_DIR=/usr/local/ophidia
+ENV LIBMATHEVAL=/usr/lib/$(uname -m)-linux-gnu
 
 #OPHIDIA PRIMITIVES
 RUN if [ "$devel" = "yes" ] ; then \
 	mkdir $OPHIDIA_DIR/src && \
 	cd $OPHIDIA_DIR/src && \
-	git clone https://github.com/OphidiaBigData/ophidia-primitives && \
-	cd ophidia-primitives && \
+	git clone https://github.com/OphidiaBigData/ophidia-primitives ; fi
+
+RUN	if [ "$libmatheval_extensions" = "yes" ] ; then \
+	cd repo/ && curl -s -O -k https://ftp.gnu.org/gnu/libmatheval/libmatheval-1.1.11.tar.gz && \
+	tar -xzf libmatheval-1.1.11.tar.gz && \
+	cd libmatheval-1.1.11 && \
+	patch -p0 < $OPHIDIA_DIR/src/ophidia-primitives/etc/libmatheval.patch && \
+	./configure --prefix=$OPHIDIA_DIR/extra && \
+	make -s > /dev/null 2>&1 && \
+	make install -s > /dev/null 2>&1 && \
+	rm -rf /repo/* && \
+	export LIBMATHEVAL=$OPHIDIA_DIR/extra ; fi
+
+#OPHIDIA PRIMITIVES
+RUN if [ "$devel" = "yes" ] ; then \
+	cd $OPHIDIA_DIR/src/ophidia-primitives && \
 	git checkout $branch_primitives && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=$OPHIDIA_DIR/oph-cluster/oph-primitives --with-matheval-path=/usr/lib/$(uname -m)-linux-gnu > /dev/null 2>&1 && \
+	./configure --prefix=$OPHIDIA_DIR/oph-cluster/oph-primitives --with-matheval-path=$LIBMATHEVAL > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf $OPHIDIA_DIR/src ; fi
@@ -282,7 +298,7 @@ RUN if [ "$devel" = "yes" ] ; then \
 	cd ophidia-server && \
 	git checkout $branch_server && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=$OPHIDIA_DIR/oph-server --with-framework-path=$OPHIDIA_DIR/oph-cluster/oph-analytics-framework --enable-webaccess --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ws-hostname=localhost --with-matheval-path=/usr/lib/$(uname -m)-linux-gnu > /dev/null 2>&1 && \
+	./configure --prefix=$OPHIDIA_DIR/oph-server --with-framework-path=$OPHIDIA_DIR/oph-cluster/oph-analytics-framework --enable-webaccess --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ws-hostname=localhost --with-matheval-path=$LIBMATHEVAL > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	mv authz $OPHIDIA_DIR/oph-server/ && \
