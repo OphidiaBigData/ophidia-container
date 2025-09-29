@@ -297,6 +297,9 @@ RUN if [ "$devel" = "yes" ] ; then \
 	cd ophidia-server && \
 	git checkout $branch_server && \
 	./bootstrap > /dev/null 2>&1 && \
+	if [ "$libmatheval_extensions" = "yes" ] ; then \
+	export LIBMATHEVAL=$OPHIDIA_DIR/extra ; else \
+	export LIBMATHEVAL=/usr/lib/$(uname -m)-linux-gnu ; fi && \
 	./configure --prefix=$OPHIDIA_DIR/oph-server --with-framework-path=$OPHIDIA_DIR/oph-cluster/oph-analytics-framework --enable-webaccess --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ws-hostname=localhost --with-matheval-path=$LIBMATHEVAL > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
