@@ -6,12 +6,18 @@ RUN apt-get update && apt-get install -y graphviz nodejs netcdf-bin cdo && apt-g
 
 USER $NB_UID
 
+# Additional packages for MLFlow
+RUN pip install rucio rucio-clients
+RUN pip install --force-reinstall -v "mlflow==2.22.1"
+
+# Additional packages for PyOphidia
 ENV PYOPHIDIA_DIR=$HOME/pyophidia
 RUN mkdir -p $PYOPHIDIA_DIR
 ADD requirements.txt $PYOPHIDIA_DIR/requirements.txt
 RUN pip install --no-cache-dir -r $PYOPHIDIA_DIR/requirements.txt
 RUN rm -rf $PYOPHIDIA_DIR/requirements.txt
 
+# PyOphidia
 RUN mkdir -p $PYOPHIDIA_DIR/src && \
 	cd $PYOPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
