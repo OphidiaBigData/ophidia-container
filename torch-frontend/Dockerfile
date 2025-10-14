@@ -4,6 +4,11 @@ USER root
 
 RUN apt-get update && apt-get install -y graphviz nodejs netcdf-bin cdo && apt-get clean -y
 
+# Directories
+
+RUN	mkdir -p /ceph
+RUN	chown $NB_UID:$NB_UID /ceph
+
 USER $NB_UID
 
 # Additional packages for MLFlow
