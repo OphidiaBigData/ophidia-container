@@ -2,18 +2,17 @@ FROM  ghcr.io/intertwin-eu/itwinai-dev:jlab-test-1
 
 USER root
 
-RUN apt-get update && apt-get install -y graphviz nodejs netcdf-bin cdo && apt-get clean -y
+RUN apt-get update && apt-get install -y graphviz nodejs netcdf-bin cdo nco && apt-get clean -y
 
-# Directories
-
-RUN	mkdir -p /ceph
-RUN	chown $NB_UID:$NB_UID /ceph
+# Additional directory for ML4Fires
+#RUN	mkdir -p /ceph
+#RUN	chown $NB_UID:$NB_UID /ceph
 
 USER $NB_UID
 
-# Additional packages for MLFlow
-RUN pip install rucio rucio-clients
-RUN pip install --force-reinstall -v "mlflow==2.22.1"
+# Additional packages for ML4Fires
+#RUN	pip install rucio rucio-clients dask
+#RUN	pip install --force-reinstall -v "mlflow==2.22.1"
 
 # Additional packages for PyOphidia
 ENV PYOPHIDIA_DIR=$HOME/pyophidia

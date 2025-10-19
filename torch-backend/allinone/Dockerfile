@@ -485,7 +485,7 @@ RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 
 # ML4Fires on shared space
 RUN	echo "export PATH=$PATH:/home/jovyan/work/ML4Fires" >> ~/.bashrc && \
-	pip install toml munch tqdm timm
+	pip install toml munch tqdm timm dask
 
 ENV OPH_SERVER_HOST="127.0.0.1"
 ENV OPH_SERVER_PORT="11732"
