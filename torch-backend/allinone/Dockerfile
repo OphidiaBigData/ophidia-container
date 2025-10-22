@@ -476,7 +476,7 @@ RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 #	cd /ML4Fires && \
 #	git checkout feature_26 && \
 #	echo "export PATH=$PATH:/ML4Fires" >> ~/.bashrc && \
-#	pip install toml munch tqdm timm && \
+#	pip install toml munch tqdm timm dask && \
 #	rm -f /ML4Fires/config/credentials.toml && \
 #	ln -s /home/jovyan/work/credentials.toml /ML4Fires/config/credentials.toml && \
 #	mkdir -p /ML4Fires/MLFLOW && ln -s /home/jovyan/work/fires/model /ML4Fires/MLFLOW/model && \
@@ -486,6 +486,9 @@ RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 # ML4Fires on shared space
 RUN	echo "export PATH=$PATH:/home/jovyan/work/ML4Fires" >> ~/.bashrc && \
 	pip install toml munch tqdm timm dask
+
+RUN	if [ "$cdo" = "yes" ] ; then \
+	pip install cdo ; fi
 
 ENV OPH_SERVER_HOST="127.0.0.1"
 ENV OPH_SERVER_PORT="11732"
