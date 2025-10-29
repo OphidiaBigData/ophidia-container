@@ -485,7 +485,7 @@ RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 
 # ML4Fires on shared space
 RUN	echo "export PATH=$PATH:/home/jovyan/work/ML4Fires" >> ~/.bashrc && \
-	pip install toml munch tqdm timm dask
+	pip install toml munch tqdm timm dask zarr
 
 RUN	if [ "$cdo" = "yes" ] ; then \
 	pip install cdo ; fi
