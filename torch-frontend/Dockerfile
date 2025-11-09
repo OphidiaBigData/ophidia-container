@@ -2,7 +2,7 @@ FROM  ghcr.io/intertwin-eu/itwinai-dev:jlab-test-1
 
 USER root
 
-RUN apt-get update && apt-get install -y graphviz nodejs netcdf-bin cdo nco && apt-get clean -y
+RUN apt-get update && apt-get install -y graphviz nodejs netcdf-bin cdo nco w3m && apt-get clean -y
 
 # Additional directory for ML4Fires
 #RUN	mkdir -p /ceph
