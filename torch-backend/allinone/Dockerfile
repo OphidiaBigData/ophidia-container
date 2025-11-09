@@ -530,6 +530,9 @@ RUN	if [ "$valgrind" = "yes" ] ; then \
 # Other packages
 RUN	apt install -y bc sudo && \
 	apt autoremove -y && apt clean -y
+	
+# Add user jovyan
+RUN	useradd -u 1000 -g users -d /home/jovyan jovyan
 
 COPY ssl-params.conf /etc/apache2/conf-available/
 COPY server_scripts/oph_submit.sh $OPHIDIA_DIR/oph-server/etc/script/oph_submit.sh
