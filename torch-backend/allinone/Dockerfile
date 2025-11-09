@@ -528,7 +528,7 @@ RUN	if [ "$valgrind" = "yes" ] ; then \
 	apt autoremove -y && apt clean -y ; fi
 
 # Other packages
-RUN	apt install -y bc && \
+RUN	apt install -y bc sudo && \
 	apt autoremove -y && apt clean -y
 
 COPY ssl-params.conf /etc/apache2/conf-available/
