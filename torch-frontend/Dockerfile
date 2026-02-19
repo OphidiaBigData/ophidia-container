@@ -1,4 +1,4 @@
-FROM	ghcr.io/intertwin-eu/itwinai-dev:0.4.1-slim-torch2.6-noble-fbb51c45db1d69f7a8d7b649eb559274a891db13
+FROM	ghcr.io/intertwin-eu/itwinai-dev:jlab-slim-0.4.1-torch2.6-noble-fbb51c45db1d69f7a8d7b649eb559274a891db13
 
 USER root
 
@@ -44,4 +44,4 @@ ENV OPH_PASSWD="abcd"
 
 WORKDIR $HOME
 
-CMD ["setup.sh", "start-notebook.sh"]
+CMD ["start-notebook.sh"]
