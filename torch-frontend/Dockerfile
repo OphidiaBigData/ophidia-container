@@ -1,8 +1,13 @@
 FROM	ghcr.io/intertwin-eu/itwinai-dev:jlab-slim-0.4.1-torch2.6-noble-fbb51c45db1d69f7a8d7b649eb559274a891db13
 
+ARG cwl=no
+
 USER root
 
-RUN	apt-get update && apt-get install -y graphviz nodejs netcdf-bin cdo nco w3m && apt-get clean -y
+RUN	apt-get update && apt-get install -y graphviz nodejs netcdf-bin cdo nco w3m && \
+	if [ "$cwl" = "yes" ] ; then \
+	apt-get install -y cwltool ; fi && \
+	apt-get clean -y
 
 # Additional directory for ML4Fires
 #RUN	mkdir -p /ceph
@@ -27,7 +32,9 @@ RUN mkdir -p $PYOPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
 	cd PyOphidia/ && \
 	git checkout release && \
-	python -m pip install ".[convert,cwl,prov,display]" && \
+	if [ "$cwl" = "yes" ] ; then \
+	python -m pip install ".[convert,cwl,prov,display]" ; else \
+	python -m pip install ".[convert,prov,display]" ; fi && \
 	cp -r pyophidia/utils $PYOPHIDIA_DIR/ && \
 	cp -r examples $PYOPHIDIA_DIR/ && \
 	rm -f $PYOPHIDIA_DIR/examples/utils/tasks && \
