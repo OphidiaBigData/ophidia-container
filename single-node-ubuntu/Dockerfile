@@ -428,6 +428,9 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	echo "source activate /usr/local/ophidia/env" >> ~/.bashrc && \
 	conda clean -y --all ; fi
 
+RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+	python -m pip install dask xarray zarr netCDF4 h5netcdf dask_jobqueue MetPy ; fi
+
 ENV OPH_SERVER_HOST="172.17.0.2"
 ENV OPH_SERVER_PORT="11732"
 ENV OPH_USER="oph-test"

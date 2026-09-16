@@ -352,7 +352,7 @@ RUN openssl req -newkey rsa:2048 \
 	rm cacert.pem myserver.pem
 
 #WEB SERVER
-RUN apt install -y apache2-bin php libapache2-mod-php && \
+RUN apt update && apt install -y apache2-bin php libapache2-mod-php && \
 	apt autoremove -y && apt clean -y && \
 	mkdir -p /etc/httpd/conf/ssl && \
 	cd /etc/httpd/conf/ssl && \
