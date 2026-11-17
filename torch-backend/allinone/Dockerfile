@@ -50,7 +50,7 @@ ADD server_scripts/oph_submit.sh /offline_ophidia/
 
 RUN cd /repo && \
 	apt update -y && \
-	apt install libaio1 apt-utils libmecab2 psmisc && \
+	apt install -y libaio1 apt-utils libmecab2 psmisc && \
 	apt autoremove -y && apt clean -y && \
 	wget https://downloads.mysql.com/archives/get/p/23/file/mysql-server_8.0.41-1debian12_amd64.deb-bundle.tar && \
 	tar -xvf mysql-server_8.0.41-1debian12_amd64.deb-bundle.tar

@@ -429,7 +429,7 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	conda clean -y --all ; fi
 
 RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-	python -m pip install dask xarray zarr netCDF4 h5netcdf dask_jobqueue MetPy ; fi
+	python -m pip install dask xarray zarr netCDF4 h5netcdf dask_jobqueue MetPy requests pystac-client rocrate ; fi
 
 ENV OPH_SERVER_HOST="172.17.0.2"
 ENV OPH_SERVER_PORT="11732"
