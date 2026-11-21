@@ -1,4 +1,5 @@
 FROM	ghcr.io/intertwin-eu/itwinai-dev:jlab-slim-0.4.1-torch2.6-noble-fbb51c45db1d69f7a8d7b649eb559274a891db13
+#FROM	ghcr.io/intertwin-eu/itwinai-dev:jlab-slim-0.5.0-torch2.6-noble-fc5b2a53e2f6a03b611ea0abf0a0176ee6b8042f
 
 ARG cwl=no
 
@@ -41,6 +42,9 @@ RUN mkdir -p $PYOPHIDIA_DIR/src && \
 	cp -r pyophidia/utils/tasks $PYOPHIDIA_DIR/examples/utils/ && \
 	rm -rf $PYOPHIDIA_DIR/src && \
 	echo "export PATH=$PATH:$PYOPHIDIA_DIR/utils" >> ~/.bashrc
+
+# Python libraries
+RUN	pip install dask xarray zarr netCDF4 h5netcdf dask_jobqueue MetPy requests pystac-client rocrate
 
 ENV PATH=$PATH:$PYOPHIDIA_DIR/utils
 

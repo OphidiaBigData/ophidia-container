@@ -28,6 +28,8 @@ ARG cdo=no
 ARG nco=no
 ARG valgrind=no
 ARG debug_level=0
+ARG libmatheval_extensions=no
+ARG parallel_nc4=no
 
 USER root
 
@@ -82,6 +84,18 @@ RUN if [ "$devel" = "yes" ] ; then \
 	git clone https://github.com/OphidiaBigData/ophidia-primitives && \
 	cd ophidia-primitives && \
 	git checkout $branch_primitives && \
+	if [ "$libmatheval_extensions" = "yes" ] ; then \
+	cd /repo && curl -s -O -k https://ftp.gnu.org/gnu/libmatheval/libmatheval-1.1.11.tar.gz && \
+	tar -xzf libmatheval-1.1.11.tar.gz && \
+	cd libmatheval-1.1.11 && \
+	patch -p0 < $OPHIDIA_DIR/src/ophidia-primitives/import_plugin/libmatheval.patch && \
+	./configure --prefix=$OPHIDIA_DIR/extra && \
+	make -s > /dev/null 2>&1 && \
+	make install -s > /dev/null 2>&1 && \
+	rm -rf /repo/* && \
+	export LIBMATHEVAL=$OPHIDIA_DIR/extra && \
+	cd $OPHIDIA_DIR/src/ophidia-primitives ; else \
+	export LIBMATHEVAL=/usr/lib/$(uname -m)-linux-gnu ; fi && \
 	./bootstrap > /dev/null 2>&1 && \
 	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-primitives --with-matheval-path=/usr/lib/$(uname -m)-linux-gnu > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
@@ -174,7 +188,8 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	cd ophidia-io-server && \
 	git checkout $branch_io_server && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-io-server --with-netcdf-path=/usr/local/ophidia/extra/ --enable-parallel-nc4 > /dev/null 2>&1 && \
+	if [ "$parallel_nc4" = "yes" ] ; then enable_nc4="--enable-parallel-nc4" ; fi && \
+	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-io-server --with-netcdf-path=/usr/local/ophidia/extra/ $enable_nc4 > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	mkdir -p /usr/local/ophidia/oph-cluster/oph-io-server/data1/var && \
@@ -429,7 +444,7 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	conda clean -y --all ; fi
 
 RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-	python -m pip install dask xarray zarr netCDF4 h5netcdf dask_jobqueue MetPy requests pystac-client rocrate ; fi
+	pip install dask xarray zarr netCDF4 h5netcdf dask_jobqueue MetPy requests pystac-client rocrate ; fi
 
 ENV OPH_SERVER_HOST="172.17.0.2"
 ENV OPH_SERVER_PORT="11732"
@@ -439,18 +454,22 @@ ENV OPH_PASSWD="abcd"
 USER root
 
 #CDO
+#RUN	if [ "$cdo" = "yes" ] ; then \
+#	cd /repo && \
+#	curl -s -O -k https://code.mpimet.mpg.de/attachments/download/30251/cdo-2.6.6.tar.gz && \
+#	tar -xzf cdo-2.6.6.tar.gz && \
+#	cd cdo-2.6.6 && \
+#	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
+#	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/local/ophidia/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/local/ophidia/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/local/ophidia/extra/lib" ./configure --with-hdf5=/usr/local/ophidia/extra/ --with-netcdf=/usr/local/ophidia/extra/ --enable-netcdf4 > /dev/null 2>&1 ; else \
+#	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --with-hdf5=/usr/ --with-netcdf=/usr/ --enable-netcdf4 > /dev/null 2>&1 ; fi && \
+#	make -s > /dev/null 2>&1 && \
+#	make install -s > /dev/null 2>&1 && \
+#	rm -rf /repo/* && \
+#	echo "CDO_PATH=/usr/local/bin" >> /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
 RUN	if [ "$cdo" = "yes" ] ; then \
-	cd /repo && \
-	curl -s -O -k https://code.mpimet.mpg.de/attachments/download/29649/cdo-2.4.4.tar.gz && \
-	tar -xzf cdo-2.4.4.tar.gz && \
-	cd cdo-2.4.4 && \
-	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/local/ophidia/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/local/ophidia/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/local/ophidia/extra/lib" ./configure --with-hdf5=/usr/local/ophidia/extra/ --with-netcdf=/usr/local/ophidia/extra/ --enable-netcdf4 > /dev/null 2>&1 ; else \
-	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --with-hdf5=/usr/ --with-netcdf=/usr/ --enable-netcdf4 > /dev/null 2>&1 ; fi && \
-	make -s > /dev/null 2>&1 && \
-	make install -s > /dev/null 2>&1 && \
-	rm -rf /repo/* && \
-	echo "CDO_PATH=/usr/local/bin" >> /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
+	apt update && apt install -y cdo && \
+	apt autoremove -y && apt clean -y && \
+	echo "CDO_PATH=/usr/bin" >> $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
 
 #NCO
 RUN	if [ "$nco" = "yes" ] ; then \
@@ -464,6 +483,10 @@ RUN	service mysql start && \
 RUN	if [ "$valgrind" = "yes" ] ; then \
 	apt install -y valgrind && \
 	apt autoremove -y && apt clean -y ; fi
+
+# Other packages
+RUN	apt install -y bc sudo zip && \
+	apt autoremove -y && apt clean -y
 
 COPY ssl-params.conf /etc/apache2/conf-available/
 COPY server_scripts/oph_submit.sh /usr/local/ophidia/oph-server/etc/script/oph_submit.sh

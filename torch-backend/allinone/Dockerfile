@@ -31,6 +31,7 @@ ARG debug_level=0
 ARG logging=no
 ARG logging_dir=/home/jovyan/work/log
 ARG libmatheval_extensions=no
+ARG parallel_nc4=no
 
 USER root
 
@@ -108,9 +109,9 @@ RUN if [ "$devel" = "yes" ] ; then \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* && \
-	export LIBMATHEVAL=$OPHIDIA_DIR/extra ; else \
+	export LIBMATHEVAL=$OPHIDIA_DIR/extra && \
+	cd $OPHIDIA_DIR/src/ophidia-primitives ; else \
 	export LIBMATHEVAL=/usr/lib/$(uname -m)-linux-gnu ; fi && \
-	cd $OPHIDIA_DIR/src/ophidia-primitives && \
 	./bootstrap > /dev/null 2>&1 && \
 	./configure --prefix=$OPHIDIA_DIR/oph-cluster/oph-primitives --with-matheval-path=$LIBMATHEVAL > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
@@ -209,7 +210,8 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	cd ophidia-io-server && \
 	git checkout $branch_io_server && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=$OPHIDIA_DIR/oph-cluster/oph-io-server --with-netcdf-path=$OPHIDIA_DIR/extra/ --enable-parallel-nc4 > /dev/null 2>&1 && \
+	if [ "$parallel_nc4" = "yes" ] ; then enable_nc4="--enable-parallel-nc4" ; fi && \
+	./configure --prefix=$OPHIDIA_DIR/oph-cluster/oph-io-server --with-netcdf-path=$OPHIDIA_DIR/extra/ $enable_nc4 > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	mkdir -p $OPHIDIA_DIR/oph-cluster/oph-io-server/data1/var && \
@@ -362,18 +364,22 @@ RUN apt update && apt install -y apache2-bin php libapache2-mod-php && \
 	a2enmod ssl && a2enmod headers && a2ensite default-ssl
 
 #CDO
+#RUN	if [ "$cdo" = "yes" ] ; then \
+#	cd /repo && \
+#	curl -s -O -k https://code.mpimet.mpg.de/attachments/download/30251/cdo-2.6.6.tar.gz && \
+#	tar -xzf cdo-2.6.6.tar.gz && \
+#	cd cdo-2.6.6 && \
+#	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
+#	PYTHON="/usr/bin/python3" CFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L$OPHIDIA_DIR/extra/lib" ./configure --with-hdf5=$OPHIDIA_DIR/extra/ --with-netcdf=$OPHIDIA_DIR/extra/ --enable-netcdf4 --enable-zlib > /dev/null 2>&1 ; else \
+#	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --with-hdf5=/usr/ --with-netcdf=/usr/ --enable-netcdf4 --enable-zlib > /dev/null 2>&1 ; fi && \
+#	make -s > /dev/null 2>&1 && \
+#	make install -s > /dev/null 2>&1 && \
+#	rm -rf /repo/* && \
+#	echo "CDO_PATH=/usr/local/bin" >> $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
 RUN	if [ "$cdo" = "yes" ] ; then \
-	cd /repo && \
-	curl -s -O -k https://code.mpimet.mpg.de/attachments/download/29649/cdo-2.4.4.tar.gz && \
-	tar -xzf cdo-2.4.4.tar.gz && \
-	cd cdo-2.4.4 && \
-	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	PYTHON="/usr/bin/python3" CFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L$OPHIDIA_DIR/extra/lib" ./configure --with-hdf5=$OPHIDIA_DIR/extra/ --with-netcdf=$OPHIDIA_DIR/extra/ --enable-netcdf4 --enable-zlib > /dev/null 2>&1 ; else \
-	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --with-hdf5=/usr/ --with-netcdf=/usr/ --enable-netcdf4 --enable-zlib > /dev/null 2>&1 ; fi && \
-	make -s > /dev/null 2>&1 && \
-	make install -s > /dev/null 2>&1 && \
-	rm -rf /repo/* && \
-	echo "CDO_PATH=/usr/local/bin" >> $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
+	apt update && apt install -y cdo && \
+	apt autoremove -y && apt clean -y && \
+	echo "CDO_PATH=/usr/bin" >> $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
 
 #NCO
 RUN	if [ "$nco" = "yes" ] ; then \
@@ -490,6 +496,10 @@ RUN	echo "export PATH=$PATH:/home/jovyan/work/ML4Fires" >> ~/.bashrc && \
 RUN	if [ "$cdo" = "yes" ] ; then \
 	pip install cdo ; fi
 
+# Python libraries
+RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+	pip install dask xarray zarr netCDF4 h5netcdf dask_jobqueue MetPy requests pystac-client rocrate ; fi
+
 ENV OPH_SERVER_HOST="127.0.0.1"
 ENV OPH_SERVER_PORT="11732"
 ENV OPH_USER="oph-test"
@@ -528,7 +538,7 @@ RUN	if [ "$valgrind" = "yes" ] ; then \
 	apt autoremove -y && apt clean -y ; fi
 
 # Other packages
-RUN	apt install -y bc sudo && \
+RUN	apt install -y bc sudo zip && \
 	apt autoremove -y && apt clean -y
 	
 # Add user jovyan
