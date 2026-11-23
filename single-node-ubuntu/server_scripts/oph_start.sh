@@ -28,44 +28,49 @@ serverid=${6}
 workflowid=${7}
 project=${8}
 taskname=${9}
+ndbms=${10}
 
 # Const
 OPH_SERVER_LOCATION=/usr/local/ophidia/oph-server
 IO_SERVER_LAUNCHER=${OPH_SERVER_LOCATION}/etc/script/start_ioserver.sh
 IO_SERVER_FLUSHER=${OPH_SERVER_LOCATION}/etc/script/stop_ioserver.sh
-SCRIPT_DIR=/usr/local/ophidia/.ophidia
-START_SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.submit.sh
-STOP_SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.stop.sh
+SCRIPT_DIR=${HOME}/.ophidia
 
 # Body
 mkdir -p ${SCRIPT_DIR}
 
-> ${log}
+echo "Start ${nhosts} I/O servers" > ${log}
 
 for myid in $(seq 1 $nhosts)
 do
+	START_SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.${myid}.submit.sh
+	
 	> ${START_SCRIPT_FILE}
+	echo "Create launcher for job ${myid}" >> ${log}
 	echo "#!/bin/bash" >> ${START_SCRIPT_FILE}
 	echo "${IO_SERVER_LAUNCHER} ${hostpartition} ${myid} ${taskid} ${serverid}" >> ${START_SCRIPT_FILE}
 	chmod +x ${START_SCRIPT_FILE}
 
+	echo "Start launcher for job ${myid}" >> ${log}
 	${START_SCRIPT_FILE} >>${log} 2>>${log} </dev/null &
 done
 
 wait $(jobs -p)
 
+echo "Stop ${nhosts} I/O servers" >> ${log}
+
+STOP_SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.stop.sh
 for myid in $(seq 1 $nhosts)
 do
 	> ${STOP_SCRIPT_FILE}
+	echo "Create destroyer for job ${myid}" >> ${log}
 	echo "#!/bin/bash" >> ${STOP_SCRIPT_FILE}
 	echo "${IO_SERVER_FLUSHER} ${hostpartition} ${myid}" >> ${STOP_SCRIPT_FILE}
 	chmod +x ${STOP_SCRIPT_FILE}
 
+	echo "Start destroyer for job ${myid}" >> ${log}
 	${STOP_SCRIPT_FILE} >>${log} 2>>${log} </dev/null
 done
-
-rm -f ${START_SCRIPT_FILE}
 rm -f ${STOP_SCRIPT_FILE}
 
 exit 0
-

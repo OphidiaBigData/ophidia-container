@@ -33,6 +33,8 @@ ARG parallel_nc4=no
 
 USER root
 
+ENV OPHIDIA_DIR=/usr/local/ophidia
+
 RUN cd / && \
 	apt update -y && \
 	apt install -y mysql-server && \
@@ -45,12 +47,12 @@ RUN apt install -y autoconf autotools-dev gcc make git libltdl-dev curl && apt a
 
 RUN mkdir -p /repo && \
 	chmod -R 777 /repo && \
-	mkdir -p /usr/local/ophidia && \
-	mkdir -p /usr/local/ophidia/extra && \
-	useradd -r ophidia -d /usr/local/ophidia && \
+	mkdir -p $OPHIDIA_DIR && \
+	mkdir -p $OPHIDIA_DIR/extra && \
+	useradd -r ophidia -d $OPHIDIA_DIR && \
 	usermod -u 2000 ophidia && \
 	groupmod -g 2000 ophidia && \
-	chown -R ophidia:ophidia /usr/local/ophidia
+	chown -R ophidia:ophidia $OPHIDIA_DIR
 
 ADD server_scripts/oph_submit.sh /offline_ophidia/
 
@@ -77,10 +79,12 @@ RUN if [ "$s3" = "yes" ] ; then \
 
 USER ophidia
 
+ENV OPHIDIA_DIR=/usr/local/ophidia
+
 #OPHIDIA PRIMITIVES
 RUN if [ "$devel" = "yes" ] ; then \
-	mkdir /usr/local/ophidia/src && \
-	cd /usr/local/ophidia/src && \
+	mkdir $OPHIDIA_DIR/src && \
+	cd $OPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-primitives && \
 	cd ophidia-primitives && \
 	git checkout $branch_primitives && \
@@ -97,27 +101,27 @@ RUN if [ "$devel" = "yes" ] ; then \
 	cd $OPHIDIA_DIR/src/ophidia-primitives ; else \
 	export LIBMATHEVAL=/usr/lib/$(uname -m)-linux-gnu ; fi && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-primitives --with-matheval-path=/usr/lib/$(uname -m)-linux-gnu > /dev/null 2>&1 && \
+	./configure --prefix=$OPHIDIA_DIR/oph-cluster/oph-primitives --with-matheval-path=/usr/lib/$(uname -m)-linux-gnu > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
-	rm -rf /usr/local/ophidia/src ; fi
+	rm -rf $OPHIDIA_DIR/src ; fi
 
 USER root
 
 RUN if [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-primitives/releases/download/v${version_primitives}/ophidia-primitives_${version_primitives}-0_amd64.deb && \
 	apt install -y ophidia-primitives_*.deb && apt autoremove -y && apt clean -y &&\
-	chown -R ophidia:ophidia /usr/local/ophidia && \
+	chown -R ophidia:ophidia $OPHIDIA_DIR && \
 	rm -rf /repo/* ; fi
 
-RUN cp /usr/local/ophidia/oph-cluster/oph-primitives/lib/liboph_*.so /usr/lib/mysql/plugin && \
-	sed -i '/GRANT/d' /usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql && \
+RUN cp $OPHIDIA_DIR/oph-cluster/oph-primitives/lib/liboph_*.so /usr/lib/mysql/plugin && \
+	sed -i '/GRANT/d' $OPHIDIA_DIR/oph-cluster/oph-primitives/etc/create_func.sql && \
 	apt autoremove -y && apt clean -y
 
 RUN service mysql start && \
 	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
 	MYSQL_PWD="abcd" mysql -u root -e "SET GLOBAL log_bin_trust_function_creators = 1;" && \
-	MYSQL_PWD="abcd" mysql -u root mysql < /usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql
+	MYSQL_PWD="abcd" mysql -u root mysql < $OPHIDIA_DIR/oph-cluster/oph-primitives/etc/create_func.sql
 
 #OPHIDIA IO SERVER
 RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
@@ -130,35 +134,35 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	wget -q https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.1/src/hdf5-1.12.1.tar.gz && \
 	gzip -cd hdf5-1.12.1.tar.gz | tar xf - && \
 	cd hdf5-1.12.1/ && \
-	./configure --prefix=/usr/local/ophidia/extra/ --enable-parallel --enable-threadsafe --enable-unsupported --with-zlib > /dev/null 2>&1 && \
+	./configure --prefix=$OPHIDIA_DIR/extra/ --enable-parallel --enable-threadsafe --enable-unsupported --with-zlib > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* ; fi
 
 #S3 SUPPORT FOR ZARR
 RUN	if [ "$s3" = "yes" ] ; then \
-	mkdir -p /usr/local/ophidia/src && \
-	cd /usr/local/ophidia/src && \
+	mkdir -p $OPHIDIA_DIR/src && \
+	cd $OPHIDIA_DIR/src && \
 	git clone https://github.com/Blosc/c-blosc.git && \
 	cd c-blosc && \
 	mkdir build && \
 	cd build && \
-	cmake -DCMAKE_INSTALL_PREFIX=/usr/local/ophidia/extra .. && \
+	cmake -DCMAKE_INSTALL_PREFIX=$OPHIDIA_DIR/extra .. && \
 	cmake --build . --target install && \
-	rm -rf /usr/local/ophidia/src ; fi
+	rm -rf $OPHIDIA_DIR/src ; fi
 RUN	if [ "$s3" = "yes" ] ; then \
-	mkdir -p /usr/local/ophidia/src && \
-	cd /usr/local/ophidia/src && \
+	mkdir -p $OPHIDIA_DIR/src && \
+	cd $OPHIDIA_DIR/src && \
 	git config --global http.version HTTP/1.1 && \
 	git clone https://github.com/aws/aws-sdk-cpp.git && \
 	cd aws-sdk-cpp && \
 	git submodule update --init --recursive && \
 	mkdir build && \
 	cd build && \
-	cmake /usr/local/ophidia/src/aws-sdk-cpp -DBUILD_ONLY=s3 -DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=/usr/local/ophidia/extra && \
+	cmake $OPHIDIA_DIR/src/aws-sdk-cpp -DBUILD_ONLY=s3 -DCMAKE_BUILD_TYPE=Debug -DENABLE_TESTING=OFF -DCMAKE_INSTALL_PREFIX=$OPHIDIA_DIR/extra && \
 	make -j -k -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
-	rm -rf /usr/local/ophidia/src ; fi
+	rm -rf $OPHIDIA_DIR/src ; fi
 
 #NETCDF-MPICH
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
@@ -168,12 +172,12 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	cd netcdf-c* && \
 	git checkout tags/v4.9.3 && \
 	if [ "$s3" = "yes" ] ; then enable_s3="--enable-s3" ; library_s3="-laws-cpp-sdk-s3 " ; fi && \
-	CC=/usr/bin/mpicc CPP=/usr/bin/mpicxx CFLAGS="-I/usr/local/ophidia/extra/include/" CPPFLAGS="-I/usr/local/ophidia/extra/include/" LDFLAGS="-L/usr/local/ophidia/extra/lib/" LIBS="-ldl $library_s3" H5DIR=/usr/local/ophidia/extra/ ./configure --prefix=/usr/local/ophidia/extra --enable-netcdf4 --with-plugin-dir=/usr/local/ophidia/extra/lib/plugins $enable_s3 > /dev/null 2>&1 && \
+	CC=/usr/bin/mpicc CPP=/usr/bin/mpicxx CFLAGS="-I$OPHIDIA_DIR/extra/include/" CPPFLAGS="-I$OPHIDIA_DIR/extra/include/" LDFLAGS="-L$OPHIDIA_DIR/extra/lib/" LIBS="-ldl $library_s3" H5DIR=$OPHIDIA_DIR/extra/ ./configure --prefix=$OPHIDIA_DIR/extra --enable-netcdf4 --with-plugin-dir=$OPHIDIA_DIR/extra/lib/plugins $enable_s3 > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* ; fi
 
-ENV	HDF5_PLUGIN_PATH=/usr/local/ophidia/extra/lib/plugins
+ENV	HDF5_PLUGIN_PATH=$OPHIDIA_DIR/extra/lib/plugins
 
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	echo "Using online source code for Ophidia I/O Server" && \
@@ -182,27 +186,27 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 USER ophidia
 
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	mkdir /usr/local/ophidia/src && \
-	cd /usr/local/ophidia/src && \
+	mkdir $OPHIDIA_DIR/src && \
+	cd $OPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-io-server && \
 	cd ophidia-io-server && \
 	git checkout $branch_io_server && \
 	./bootstrap > /dev/null 2>&1 && \
 	if [ "$parallel_nc4" = "yes" ] ; then enable_nc4="--enable-parallel-nc4" ; fi && \
-	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-io-server --with-netcdf-path=/usr/local/ophidia/extra/ $enable_nc4 > /dev/null 2>&1 && \
+	./configure --prefix=$OPHIDIA_DIR/oph-cluster/oph-io-server --with-netcdf-path=$OPHIDIA_DIR/extra/ $enable_nc4 > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
-	mkdir -p /usr/local/ophidia/oph-cluster/oph-io-server/data1/var && \
-	mkdir -p /usr/local/ophidia/oph-cluster/oph-io-server/data1/log && \
-	rm -rf /usr/local/ophidia/src ; fi
+	mkdir -p $OPHIDIA_DIR/oph-cluster/oph-io-server/data1/var && \
+	mkdir -p $OPHIDIA_DIR/oph-cluster/oph-io-server/data1/log && \
+	rm -rf $OPHIDIA_DIR/src ; fi
 
 USER root
 
 RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-io-server/releases/download/v${version_io_server}/ophidia-io-server_${version_io_server}-0_amd64.deb && \
 	apt install -y ophidia-io-server_*.deb && apt autoremove -y && apt clean -y && \
-	chown -R ophidia:ophidia /usr/local/ophidia && \
-	sed -i "s/127.0.0.1/0.0.0.0/g" /usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf && \
+	chown -R ophidia:ophidia $OPHIDIA_DIR && \
+	sed -i "s/127.0.0.1/0.0.0.0/g" $OPHIDIA_DIR/oph-cluster/oph-io-server/etc/oph_ioserver.conf && \
 	rm -rf /repo/* ; fi
 
 RUN if [ "$main_partition" = "yes" ] ; then \
@@ -229,25 +233,25 @@ RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
 USER ophidia
 
 RUN if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	mkdir -p /usr/local/ophidia/src && \
-	cd /usr/local/ophidia/src && \
+	mkdir -p $OPHIDIA_DIR/src && \
+	cd $OPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-analytics-framework && \
 	cd ophidia-analytics-framework && \
 	git checkout $branch_analytics_framework && \
 	./bootstrap > /dev/null 2>&1 && \
 	if [ "$zarr" = "yes" ] ; then enable_zarr="--enable-zarr" ; fi && \
-	./configure --prefix=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-parallel-netcdf --with-netcdf-path=/usr/local/ophidia/extra/ --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ophidiaio-server-path=/usr/local/ophidia/oph-cluster/oph-io-server --enable-cfitsio --with-debug-level=$debug_level $enable_zarr > /dev/null 2>&1 && \
+	./configure --prefix=$OPHIDIA_DIR/oph-cluster/oph-analytics-framework --enable-parallel-netcdf --with-netcdf-path=$OPHIDIA_DIR/extra/ --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ophidiaio-server-path=$OPHIDIA_DIR/oph-cluster/oph-io-server --enable-cfitsio --with-debug-level=$debug_level $enable_zarr > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
-	rm -rf /usr/local/ophidia/src && \
-	mkdir -p /usr/local/ophidia/oph-cluster/oph-analytics-framework/log ; fi
+	rm -rf $OPHIDIA_DIR/src && \
+	mkdir -p $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/log ; fi
 
 USER root
 
 RUN if [ "$thread_safe" != "yes" ] && [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-analytics-framework/releases/download/v${version_analytics_framework}/ophidia-analytics-framework_${version_analytics_framework}-0_amd64.deb && \
 	apt install -y ophidia-analytics-framework_*.deb && apt autoremove -y && apt clean -y && \
-	chown -R ophidia:ophidia /usr/local/ophidia && \
+	chown -R ophidia:ophidia $OPHIDIA_DIR && \
 	chown -R ophidia:ophidia /var/www/html/ophidia && \
 	rm -rf /repo/* ; fi
 
@@ -257,7 +261,7 @@ RUN if [ "$cjose" = "yes" ] ; then \
 	curl -s -LOJk https://github.com/cisco/cjose/archive/0.4.1.tar.gz && \
 	tar -xzf cjose-0.4.1.tar.gz && \
 	cd cjose-0.4.1 && \
-	./configure --prefix=/usr/local/ophidia/extra > /dev/null 2>&1 && \
+	./configure --prefix=$OPHIDIA_DIR/extra > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
 	rm -rf /repo/* ; fi
@@ -271,32 +275,33 @@ RUN if [ "$devel" = "yes" ] ; then \
 USER ophidia
 
 RUN if [ "$devel" = "yes" ] ; then \
-	mkdir -p /usr/local/ophidia/src && \
-	cd /usr/local/ophidia/src && \
+	mkdir -p $OPHIDIA_DIR/src && \
+	cd $OPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-server && \
 	cd ophidia-server && \
 	git checkout $branch_server && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=/usr/local/ophidia/oph-server --with-framework-path=/usr/local/ophidia/oph-cluster/oph-analytics-framework --enable-webaccess --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ws-hostname=localhost --with-matheval-path=/usr/lib/$(uname -m)-linux-gnu > /dev/null 2>&1 && \
+	./configure --prefix=$OPHIDIA_DIR/oph-server --with-framework-path=$OPHIDIA_DIR/oph-cluster/oph-analytics-framework --enable-webaccess --with-web-server-path=/var/www/html/ophidia --with-web-server-url=http://127.0.0.1/ophidia --with-ws-hostname=localhost --with-matheval-path=/usr/lib/$(uname -m)-linux-gnu > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
-	mv authz /usr/local/ophidia/oph-server/ && \
-	mkdir -p /usr/local/ophidia/oph-server/log && \
-	mkdir -p /usr/local/ophidia/oph-server/authz/sessions && \
+	mv authz $OPHIDIA_DIR/oph-server/ && \
+	mkdir -p $OPHIDIA_DIR/oph-server/log && \
+	mkdir -p $OPHIDIA_DIR/oph-server/authz/sessions && \
 	mkdir -p /var/www/html/ophidia/sessions && \
-	touch /usr/local/ophidia/oph-server/log/server.log && \
-	rm -rf /usr/local/ophidia/src ; fi
+	touch $OPHIDIA_DIR/oph-server/log/server.log && \
+	rm -rf $OPHIDIA_DIR/src ; fi
 
 USER root
 
 RUN if [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-server/releases/download/v${version_server}/ophidia-server_${version_server}-0_amd64.deb && \
 	apt install -y ophidia-server_*.deb && apt autoremove -y && apt clean -y && \
-	chown -R ophidia:ophidia /usr/local/ophidia && \
-	touch /usr/local/ophidia/oph-server/log/server.log && \
-	sed -i "s/OPH_MAX_CORES=.*/OPH_MAX_CORES=0/g" /usr/local/ophidia/oph-server/authz/users/oph-test/user.dat && \
-	sed -i "s/OPH_MAX_CORES=.*/OPH_MAX_CORES=0/g" /usr/local/ophidia/oph-server/authz/users/framework/user.dat && \
+	chown -R ophidia:ophidia $OPHIDIA_DIR && \
+	touch $OPHIDIA_DIR/oph-server/log/server.log && \
 	rm -rf /repo/* ; fi
+
+RUN	sed -i "s/OPH_MAX_HOSTS=.*/OPH_MAX_HOSTS=250/g" $OPHIDIA_DIR/oph-server/authz/users/oph-test/user.dat && \
+	sed -i "s/OPH_MAX_CORES=.*/OPH_MAX_CORES=0/g" $OPHIDIA_DIR/oph-server/authz/users/oph-test/user.dat
 
 #certificates generation and installation
 RUN openssl req -newkey rsa:2048 \
@@ -324,8 +329,8 @@ RUN openssl req -newkey rsa:2048 \
 	    -CAcreateserial \
 	    -out servercert.pem && \
 	cat servercert.pem serverkey.pem rootcert.pem > myserver.pem && \
-	mkdir -p /usr/local/ophidia/oph-server/etc/cert && \
-	cp cacert.pem myserver.pem /usr/local/ophidia/oph-server/etc/cert && \
+	mkdir -p $OPHIDIA_DIR/oph-server/etc/cert && \
+	cp cacert.pem myserver.pem $OPHIDIA_DIR/oph-server/etc/cert && \
 	rm cacert.pem myserver.pem
 
 #WEB SERVER
@@ -346,27 +351,27 @@ RUN if [ "$devel" = "yes" ] ; then \
 USER ophidia
 
 RUN if [ "$devel" = "yes" ] ; then \
-	mkdir -p /usr/local/ophidia/src && \
-	cd /usr/local/ophidia/src && \
+	mkdir -p $OPHIDIA_DIR/src && \
+	cd $OPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/ophidia-terminal && \
 	cd ophidia-terminal && \
 	git checkout $branch_terminal && \
 	./bootstrap > /dev/null 2>&1 && \
-	./configure --prefix=/usr/local/ophidia/oph-terminal --disable-xml-ssl-check --disable-xml-removal > /dev/null 2>&1 && \
+	./configure --prefix=$OPHIDIA_DIR/oph-terminal --disable-xml-ssl-check --disable-xml-removal > /dev/null 2>&1 && \
 	make -s > /dev/null 2>&1 && \
 	make install -s > /dev/null 2>&1 && \
-	rm -rf /usr/local/ophidia/src ; fi
+	rm -rf $OPHIDIA_DIR/src ; fi
 
 USER root
 
 RUN if [ "$devel" != "yes" ] ; then \
 	cd /repo && wget -q https://github.com/OphidiaBigData/ophidia-terminal/releases/download/v${version_terminal}/ophidia-terminal_${version_terminal}-0_amd64.deb && \
 	apt install -y ophidia-terminal_*.deb && apt autoremove -y && apt clean -y && \
-	chown -R ophidia:ophidia /usr/local/ophidia && \
+	chown -R ophidia:ophidia $OPHIDIA_DIR && \
 	rm -rf /repo/*; fi
 
 #OPERATORS_FIXES
-RUN cd /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/operators_xml/ && \
+RUN cd $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/etc/operators_xml/ && \
 	sed -i "s/mysql_table|//" OPH_IMPORTNC_operator_1.0.xml OPH_INSTANCES_operator_1.0.xml OPH_RANDCUBE_operator_1.0.xml && \
 	sed -i "s/default=\"mysql_table/default=\"ophidiaio_memory/" OPH_IMPORTNC_operator_1.0.xml OPH_RANDCUBE_operator_1.0.xml && \
 	sed -i "s/ophidiaio_memory|all/ophidiaio_memory/" OPH_INSTANCES_operator_1.0.xml && \
@@ -384,10 +389,10 @@ ENV OPH_TERM_FORMAT=extended_compact
 
 USER root
 
-ENV PATH=/usr/local/ophidia/extra/bin:$PATH
-ENV LD_LIBRARY_PATH=/usr/local/ophidia/extra/lib:$HDF5_PLUGIN_PATH:$LD_LIBRARY_PATH
+ENV PATH=$OPHIDIA_DIR/extra/bin:$PATH
+ENV LD_LIBRARY_PATH=$OPHIDIA_DIR/extra/lib:$HDF5_PLUGIN_PATH:$LD_LIBRARY_PATH
 
-COPY server_scripts/oph_submit.sh /usr/local/ophidia/extra/etc/
+COPY server_scripts/oph_submit.sh $OPHIDIA_DIR/extra/etc/
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
     apt install -y graphviz nodejs && apt autoremove -y && apt clean -y ; fi
@@ -402,15 +407,15 @@ ENV PATH=$CONDA_DIR/bin:$PATH
 USER ophidia
 
 ENV PATH=$CONDA_DIR/bin:$PATH
-ADD environment.yml /usr/local/ophidia/environment.yml
+ADD environment.yml $OPHIDIA_DIR/environment.yml
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
 	conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
-    conda env create -f /usr/local/ophidia/environment.yml -p /usr/local/ophidia/env ; fi
-RUN rm -r /usr/local/ophidia/environment.yml
+    conda env create -f $OPHIDIA_DIR/environment.yml -p $OPHIDIA_DIR/env ; fi
+RUN rm -r $OPHIDIA_DIR/environment.yml
 
-ENV PATH=/usr/local/ophidia/env/bin:$PATH:/usr/local/ophidia/proj/bin:/usr/local/ophidia/.local/bin
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/ophidia/proj/lib:/usr/local/ophidia/.local/lib
+ENV PATH=$OPHIDIA_DIR/env/bin:$PATH:$OPHIDIA_DIR/proj/bin:$OPHIDIA_DIR/.local/bin
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$OPHIDIA_DIR/proj/lib:$OPHIDIA_DIR/.local/lib
 
 RUN echo "export PATH=$PATH" >> ~/.bashrc && \
 	echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> ~/.bashrc && \
@@ -418,29 +423,29 @@ RUN echo "export PATH=$PATH" >> ~/.bashrc && \
 
 RUN if [ "$jupyter" = "yes" ] ; then \
 	pip install jupyterlab && \
-	mkdir -p /usr/local/ophidia/.jupyter/ && \
-	touch /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
-	printf "{\n  \"ServerApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
-	chmod 600 /usr/local/ophidia/.jupyter/jupyter_server_config.json && \
+	mkdir -p $OPHIDIA_DIR/.jupyter/ && \
+	touch $OPHIDIA_DIR/.jupyter/jupyter_server_config.json && \
+	printf "{\n  \"ServerApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > $OPHIDIA_DIR/.jupyter/jupyter_server_config.json && \
+	chmod 600 $OPHIDIA_DIR/.jupyter/jupyter_server_config.json && \
 	printf "\nYour jupyter password is:\t\'ophidia\'\n" ; fi
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-	mkdir -p /usr/local/ophidia/src && \
-	cd /usr/local/ophidia/src && \
+	mkdir -p $OPHIDIA_DIR/src && \
+	cd $OPHIDIA_DIR/src && \
 	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
 	cd PyOphidia/ && \
 	git checkout $branch_pyophidia && \
 	python -m pip install ".[convert,cwl,prov,display]" && \
-	cp -r pyophidia/utils /usr/local/ophidia/ && \
-	cp -r examples /usr/local/ophidia/ && \
-	rm -f /usr/local/ophidia/examples/utils/tasks && \
-	cp -r pyophidia/utils/tasks /usr/local/ophidia/examples/utils/ && \
-	mkdir -p /usr/local/ophidia/work && \
-	rm -rf /usr/local/ophidia/src ; fi
+	cp -r pyophidia/utils $OPHIDIA_DIR/ && \
+	cp -r examples $OPHIDIA_DIR/ && \
+	rm -f $OPHIDIA_DIR/examples/utils/tasks && \
+	cp -r pyophidia/utils/tasks $OPHIDIA_DIR/examples/utils/ && \
+	mkdir -p $OPHIDIA_DIR/work && \
+	rm -rf $OPHIDIA_DIR/src ; fi
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-	echo "export PATH=$PATH:/usr/local/ophidia/utils" >> ~/.bashrc && \
-	echo "source activate /usr/local/ophidia/env" >> ~/.bashrc && \
+	echo "export PATH=$PATH:$OPHIDIA_DIR/utils" >> ~/.bashrc && \
+	echo "source activate $OPHIDIA_DIR/env" >> ~/.bashrc && \
 	conda clean -y --all ; fi
 
 RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
@@ -460,12 +465,12 @@ USER root
 #	tar -xzf cdo-2.6.6.tar.gz && \
 #	cd cdo-2.6.6 && \
 #	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-#	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/local/ophidia/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/local/ophidia/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/local/ophidia/extra/lib" ./configure --with-hdf5=/usr/local/ophidia/extra/ --with-netcdf=/usr/local/ophidia/extra/ --enable-netcdf4 > /dev/null 2>&1 ; else \
+#	PYTHON="/usr/bin/python3" CFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L$OPHIDIA_DIR/extra/lib" ./configure --with-hdf5=$OPHIDIA_DIR/extra/ --with-netcdf=$OPHIDIA_DIR/extra/ --enable-netcdf4 > /dev/null 2>&1 ; else \
 #	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --with-hdf5=/usr/ --with-netcdf=/usr/ --enable-netcdf4 > /dev/null 2>&1 ; fi && \
 #	make -s > /dev/null 2>&1 && \
 #	make install -s > /dev/null 2>&1 && \
 #	rm -rf /repo/* && \
-#	echo "CDO_PATH=/usr/local/bin" >> /usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
+#	echo "CDO_PATH=/usr/local/bin" >> $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
 RUN	if [ "$cdo" = "yes" ] ; then \
 	apt update && apt install -y cdo && \
 	apt autoremove -y && apt clean -y && \
@@ -489,17 +494,17 @@ RUN	apt install -y bc sudo zip && \
 	apt autoremove -y && apt clean -y
 
 COPY ssl-params.conf /etc/apache2/conf-available/
-COPY server_scripts/oph_submit.sh /usr/local/ophidia/oph-server/etc/script/oph_submit.sh
-COPY server_scripts/oph_cancel.sh /usr/local/ophidia/oph-server/etc/script/oph_cancel.sh
-COPY server_scripts/oph_start.sh /usr/local/ophidia/oph-server/etc/script/oph_start.sh
-COPY server_scripts/oph_check.sh /usr/local/ophidia/oph-server/etc/script/oph_check.sh
-COPY server_scripts/start_ioserver.sh /usr/local/ophidia/oph-server/etc/script/start_ioserver.sh
-COPY server_scripts/stop_ioserver.sh /usr/local/ophidia/oph-server/etc/script/stop_ioserver.sh
-COPY server_scripts/oph_ioserver.conf.template /usr/local/ophidia/oph-server/etc/script/oph_ioserver.conf.template
+COPY server_scripts/oph_submit.sh $OPHIDIA_DIR/oph-server/etc/script/oph_submit.sh
+COPY server_scripts/oph_cancel.sh $OPHIDIA_DIR/oph-server/etc/script/oph_cancel.sh
+COPY server_scripts/oph_start.sh $OPHIDIA_DIR/oph-server/etc/script/oph_start.sh
+COPY server_scripts/oph_check.sh $OPHIDIA_DIR/oph-server/etc/script/oph_check.sh
+COPY server_scripts/start_ioserver.sh $OPHIDIA_DIR/oph-server/etc/script/start_ioserver.sh
+COPY server_scripts/stop_ioserver.sh $OPHIDIA_DIR/oph-server/etc/script/stop_ioserver.sh
+COPY server_scripts/oph_ioserver.conf.template $OPHIDIA_DIR/oph-server/etc/script/oph_ioserver.conf.template
 COPY entrypoint.sh /
 
-RUN	echo "ENABLE_CLUSTER_DEPLOYMENT=yes" >> /usr/local/ophidia/oph-server/etc/server.conf
-RUN	echo "ENABLE_CLUSTER_INCREASE=yes" >> /usr/local/ophidia/oph-server/etc/server.conf
+RUN	echo "ENABLE_CLUSTER_DEPLOYMENT=yes" >> $OPHIDIA_DIR/oph-server/etc/server.conf
+RUN	echo "ENABLE_CLUSTER_INCREASE=yes" >> $OPHIDIA_DIR/oph-server/etc/server.conf
 
 EXPOSE 11732
 EXPOSE 8888

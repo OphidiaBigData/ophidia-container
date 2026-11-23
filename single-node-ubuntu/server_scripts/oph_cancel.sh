@@ -35,7 +35,7 @@ JOBID="$(ps aux | grep oph_io_server | grep ${serverid}${taskid} | awk '{ print 
 if [ "$JOBID" != "" ] ; then
 kill $JOBID
 else
-killall ${serverid}${taskid}.submit.sh
+killall ${serverid}${taskid}.*.submit.sh
 fi
 
 exit 0

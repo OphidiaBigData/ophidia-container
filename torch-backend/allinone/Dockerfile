@@ -319,9 +319,10 @@ RUN if [ "$devel" != "yes" ] ; then \
 	apt install -y ophidia-server_*.deb && apt autoremove -y && apt clean -y && \
 	chown -R $NB_UID:$NB_UID $OPHIDIA_DIR && \
 	touch $OPHIDIA_DIR/oph-server/log/server.log && \
-	sed -i "s/OPH_MAX_CORES=.*/OPH_MAX_CORES=0/g" $OPHIDIA_DIR/oph-server/authz/users/oph-test/user.dat && \
-	sed -i "s/OPH_MAX_CORES=.*/OPH_MAX_CORES=0/g" $OPHIDIA_DIR/oph-server/authz/users/framework/user.dat && \
 	rm -rf /repo/* ; fi
+
+RUN sed -i "s/OPH_MAX_HOSTS=.*/OPH_MAX_HOSTS=250/g" $OPHIDIA_DIR/oph-server/authz/users/oph-test/user.dat && \
+	sed -i "s/OPH_MAX_CORES=.*/OPH_MAX_CORES=0/g" $OPHIDIA_DIR/oph-server/authz/users/oph-test/user.dat
 
 #certificates generation and installation
 RUN openssl req -newkey rsa:2048 \
@@ -507,18 +508,13 @@ ENV OPH_PASSWD="abcd"
 
 WORKDIR $HOME
 
-# Logging IO Server
-RUN	if [ "$logging" = "yes" ] ; then \
-	rm -rf $OPHIDIA_DIR/oph-cluster/oph-io-server/data1/log && \
-	ln -s $logging_dir/ioserver0 $OPHIDIA_DIR/oph-cluster/oph-io-server/data1/log ; fi
-
 # Logging Analytics Framework
-RUN	if [ "$logging" = "yes" ] ; then \
+RUN	if [ "$logging" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	rm -rf $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/log && \
 	ln -s $logging_dir/framework $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/log ; fi
 
 # Logging Server
-RUN	if [ "$logging" = "yes" ] ; then \
+RUN	if [ "$logging" = "yes" ] || [ "$devel" = "yes" ] ; then \
 	rm -rf $OPHIDIA_DIR/oph-server/log && \
 	ln -s $logging_dir/server $OPHIDIA_DIR/oph-server/log ; fi
 
@@ -526,8 +522,7 @@ USER root
 
 # Logging IO Server
 RUN	if [ "$logging" = "yes" ] || [ "$devel" = "yes" ] ; then \
-	mkdir -p /root/.ophidia && \
-	ln -s $logging_dir/ioserver1 /root/.ophidia/data1 ; fi
+	ln -s $logging_dir/ioserver /root/.ophidia ; fi
 
 RUN	/usr/sbin/start_mysql && \
 	while [ ! -S /var/run/mysqld/mysqld.sock ]; do sleep 1; done && \
