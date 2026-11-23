@@ -62,6 +62,8 @@ echo "Stop ${nhosts} I/O servers" >> ${log}
 STOP_SCRIPT_FILE=${SCRIPT_DIR}/${serverid}${taskid}.stop.sh
 for myid in $(seq 1 $nhosts)
 do
+	rm -f ${SCRIPT_DIR}/${serverid}${taskid}.${myid}.submit.sh
+	
 	> ${STOP_SCRIPT_FILE}
 	echo "Create destroyer for job ${myid}" >> ${log}
 	echo "#!/bin/bash" >> ${STOP_SCRIPT_FILE}
