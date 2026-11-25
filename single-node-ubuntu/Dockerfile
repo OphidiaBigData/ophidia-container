@@ -395,26 +395,38 @@ ENV LD_LIBRARY_PATH=$OPHIDIA_DIR/extra/lib:$HDF5_PLUGIN_PATH:$LD_LIBRARY_PATH
 COPY server_scripts/oph_submit.sh $OPHIDIA_DIR/extra/etc/
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    apt install -y graphviz nodejs && apt autoremove -y && apt clean -y ; fi
+    apt install -y graphviz nodejs xdg-utils && apt autoremove -y && apt clean -y ; fi
 
-ENV CONDA_DIR=/opt/conda
-RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-    wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-$(uname -m).sh -O miniconda.sh && \
-    bash miniconda.sh -b -p $CONDA_DIR && \
-    rm -r miniconda.sh ; fi
-ENV PATH=$CONDA_DIR/bin:$PATH
+#ENV CONDA_DIR=/opt/conda
+#RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+#    wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-$(uname -m).sh -O miniconda.sh && \
+#    bash miniconda.sh -b -p $CONDA_DIR && \
+#    rm -r miniconda.sh ; fi
+#ENV PATH=$CONDA_DIR/bin:$PATH
+
+RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+	apt install -y python3 the python3-venv python3-dev build-essential ca-certificates && apt autoremove -y && apt clean -y ; fi
 
 USER ophidia
 
-ENV PATH=$CONDA_DIR/bin:$PATH
-ADD environment.yml $OPHIDIA_DIR/environment.yml
-RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-	conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
-	conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
-    conda env create -f $OPHIDIA_DIR/environment.yml -p $OPHIDIA_DIR/env ; fi
-RUN rm -r $OPHIDIA_DIR/environment.yml
+#ENV PATH=$CONDA_DIR/bin:$PATH
+#ADD environment.yml $OPHIDIA_DIR/environment.yml
+#RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+#	conda init && \
+#	conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main && \
+#	conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r && \
+#	conda env create -f $OPHIDIA_DIR/environment.yml -p $OPHIDIA_DIR/env ; fi
+#RUN rm -r $OPHIDIA_DIR/environment.yml
+RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+	cd $OPHIDIA_DIR && \
+	python3 -m venv env ; fi
+ENV PATH=$OPHIDIA_DIR/env/bin:$PATH
+RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+	pip install bokeh cartopy jupyter jupyterlab ipykernel matplotlib notebook numpy pandas scipy shapely xarray cwltool ; fi
+RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+	python -m ipykernel install --sys-prefix --name python3 --display-name "Python 3 (venv)" ; fi
 
-ENV PATH=$OPHIDIA_DIR/env/bin:$PATH:$OPHIDIA_DIR/proj/bin:$OPHIDIA_DIR/.local/bin
+ENV PATH=$PATH:$OPHIDIA_DIR/proj/bin:$OPHIDIA_DIR/.local/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$OPHIDIA_DIR/proj/lib:$OPHIDIA_DIR/.local/lib
 
 RUN echo "export PATH=$PATH" >> ~/.bashrc && \
@@ -422,7 +434,7 @@ RUN echo "export PATH=$PATH" >> ~/.bashrc && \
 	echo "export HDF5_PLUGIN_PATH=$HDF5_PLUGIN_PATH" >> ~/.bashrc
 
 RUN if [ "$jupyter" = "yes" ] ; then \
-	pip install jupyterlab && \
+	cd $OPHIDIA_DIR && \
 	mkdir -p $OPHIDIA_DIR/.jupyter/ && \
 	touch $OPHIDIA_DIR/.jupyter/jupyter_server_config.json && \
 	printf "{\n  \"ServerApp\": {\n    \"password\": \"argon2:\$argon2id\$v=19\$m=10240,t=10,p=8\$qowYWxFJARKuf//IthKHmQ\$MHA01UDBcUa40VXEjL6apw\"\n  }\n}" > $OPHIDIA_DIR/.jupyter/jupyter_server_config.json && \
@@ -435,7 +447,7 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	git clone https://github.com/OphidiaBigData/PyOphidia.git && \
 	cd PyOphidia/ && \
 	git checkout $branch_pyophidia && \
-	python -m pip install ".[convert,cwl,prov,display]" && \
+	pip install ".[convert,cwl,prov,display]" && \
 	cp -r pyophidia/utils $OPHIDIA_DIR/ && \
 	cp -r examples $OPHIDIA_DIR/ && \
 	rm -f $OPHIDIA_DIR/examples/utils/tasks && \
@@ -444,37 +456,33 @@ RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
 	rm -rf $OPHIDIA_DIR/src ; fi
 
 RUN if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-	echo "export PATH=$PATH:$OPHIDIA_DIR/utils" >> ~/.bashrc && \
-	echo "source activate $OPHIDIA_DIR/env" >> ~/.bashrc && \
-	conda clean -y --all ; fi
-
-RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-	pip install dask xarray zarr netCDF4 h5netcdf dask_jobqueue MetPy requests pystac-client rocrate ; fi
+	echo "export PATH=$PATH:$OPHIDIA_DIR/env/bin:$OPHIDIA_DIR/utils" >> ~/.bashrc ; fi
+#	echo "conda activate $OPHIDIA_DIR/env" >> ~/.bashrc && \
+#	conda clean -y --all ; fi
 
 ENV OPH_SERVER_HOST="172.17.0.2"
 ENV OPH_SERVER_PORT="11732"
 ENV OPH_USER="oph-test"
 ENV OPH_PASSWD="abcd"
 
+RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
+	pip install dask dask_jobqueue zarr netCDF4 h5netcdf MetPy requests pystac-client rocrate ; fi
+
 USER root
 
 #CDO
-#RUN	if [ "$cdo" = "yes" ] ; then \
-#	cd /repo && \
-#	curl -s -O -k https://code.mpimet.mpg.de/attachments/download/30251/cdo-2.6.6.tar.gz && \
-#	tar -xzf cdo-2.6.6.tar.gz && \
-#	cd cdo-2.6.6 && \
-#	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
-#	PYTHON="/usr/bin/python3" CFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L$OPHIDIA_DIR/extra/lib" ./configure --with-hdf5=$OPHIDIA_DIR/extra/ --with-netcdf=$OPHIDIA_DIR/extra/ --enable-netcdf4 > /dev/null 2>&1 ; else \
-#	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --with-hdf5=/usr/ --with-netcdf=/usr/ --enable-netcdf4 > /dev/null 2>&1 ; fi && \
-#	make -s > /dev/null 2>&1 && \
-#	make install -s > /dev/null 2>&1 && \
-#	rm -rf /repo/* && \
-#	echo "CDO_PATH=/usr/local/bin" >> $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
 RUN	if [ "$cdo" = "yes" ] ; then \
-	apt update && apt install -y cdo && \
-	apt autoremove -y && apt clean -y && \
-	echo "CDO_PATH=/usr/bin" >> $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
+	cd /repo && \
+	curl -s -O -k https://code.mpimet.mpg.de/attachments/download/30251/cdo-2.6.6.tar.gz && \
+	tar -xzf cdo-2.6.6.tar.gz && \
+	cd cdo-2.6.6 && \
+	if [ "$thread_safe" = "yes" ] || [ "$devel" = "yes" ] ; then \
+	PYTHON="/usr/bin/python3" CFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I$OPHIDIA_DIR/extra/include -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L$OPHIDIA_DIR/extra/lib" ./configure --with-hdf5=$OPHIDIA_DIR/extra/ --with-netcdf=$OPHIDIA_DIR/extra/ --enable-netcdf4 > /dev/null 2>&1 ; else \
+	PYTHON="/usr/bin/python3" CFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" CPPFLAGS="-I/usr/include -I/usr/include/hdf5/serial -I/usr/lib/$(uname -m)-linux-gnu/mpich/include" LDFLAGS="-L/usr/lib/$(uname -m)-linux-gnu" ./configure --with-hdf5=/usr/ --with-netcdf=/usr/ --enable-netcdf4 > /dev/null 2>&1 ; fi && \
+	make -s > /dev/null 2>&1 && \
+	make install -s > /dev/null 2>&1 && \
+	rm -rf /repo/* && \
+	echo "CDO_PATH=/usr/local/bin" >> $OPHIDIA_DIR/oph-cluster/oph-analytics-framework/etc/oph_configuration ; fi
 
 #NCO
 RUN	if [ "$nco" = "yes" ] ; then \
@@ -493,22 +501,21 @@ RUN	if [ "$valgrind" = "yes" ] ; then \
 RUN	apt install -y bc sudo zip && \
 	apt autoremove -y && apt clean -y
 
-COPY ssl-params.conf /etc/apache2/conf-available/
-COPY server_scripts/oph_submit.sh $OPHIDIA_DIR/oph-server/etc/script/oph_submit.sh
-COPY server_scripts/oph_cancel.sh $OPHIDIA_DIR/oph-server/etc/script/oph_cancel.sh
-COPY server_scripts/oph_start.sh $OPHIDIA_DIR/oph-server/etc/script/oph_start.sh
-COPY server_scripts/oph_check.sh $OPHIDIA_DIR/oph-server/etc/script/oph_check.sh
-COPY server_scripts/start_ioserver.sh $OPHIDIA_DIR/oph-server/etc/script/start_ioserver.sh
-COPY server_scripts/stop_ioserver.sh $OPHIDIA_DIR/oph-server/etc/script/stop_ioserver.sh
-COPY server_scripts/oph_ioserver.conf.template $OPHIDIA_DIR/oph-server/etc/script/oph_ioserver.conf.template
-COPY entrypoint.sh /
-
+COPY --chown=ophidia:ophidia server_scripts/oph_submit.sh $OPHIDIA_DIR/oph-server/etc/script/oph_submit.sh
+COPY --chown=ophidia:ophidia server_scripts/oph_cancel.sh $OPHIDIA_DIR/oph-server/etc/script/oph_cancel.sh
+COPY --chown=ophidia:ophidia server_scripts/oph_start.sh $OPHIDIA_DIR/oph-server/etc/script/oph_start.sh
+COPY --chown=ophidia:ophidia server_scripts/oph_check.sh $OPHIDIA_DIR/oph-server/etc/script/oph_check.sh
+COPY --chown=ophidia:ophidia server_scripts/start_ioserver.sh $OPHIDIA_DIR/oph-server/etc/script/start_ioserver.sh
+COPY --chown=ophidia:ophidia server_scripts/stop_ioserver.sh $OPHIDIA_DIR/oph-server/etc/script/stop_ioserver.sh
+COPY --chown=ophidia:ophidia server_scripts/oph_ioserver.conf.template $OPHIDIA_DIR/oph-server/etc/script/oph_ioserver.conf.template
 RUN	echo "ENABLE_CLUSTER_DEPLOYMENT=yes" >> $OPHIDIA_DIR/oph-server/etc/server.conf
 RUN	echo "ENABLE_CLUSTER_INCREASE=yes" >> $OPHIDIA_DIR/oph-server/etc/server.conf
 
+COPY ssl-params.conf /etc/apache2/conf-available/
+COPY entrypoint.sh /
+
 EXPOSE 11732
 EXPOSE 8888
-EXPOSE 65000
 
 ENV JUPYTER=$jupyter
 ENV PYTHON=$python
