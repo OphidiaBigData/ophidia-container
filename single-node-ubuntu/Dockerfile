@@ -466,7 +466,7 @@ ENV OPH_USER="oph-test"
 ENV OPH_PASSWD="abcd"
 
 RUN	if [ "$jupyter" = "yes" ] || [ "$python" = "yes" ] ; then \
-	pip install dask dask_jobqueue zarr netCDF4 h5netcdf MetPy requests pystac-client rocrate ; fi
+	pip install dask dask_jobqueue zarr netCDF4 h5netcdf MetPy requests pystac-client rocrate roc-validator spdx-license-list ; fi
 
 USER root
 
